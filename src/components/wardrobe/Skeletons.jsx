@@ -29,7 +29,7 @@ export function ClosetGridSkeleton({ count = 6 }) {
 
 export function OutfitCardSkeleton() {
   return (
-    <div className="space-y-4 rounded-2xl border bg-card p-4 shadow-sm">
+    <div className="w-full max-w-md mx-auto rounded-2xl border bg-card p-4 shadow-sm">
       <div className="flex gap-2">
         <div className="skeleton h-20 w-20 rounded-lg" />
         <div className="skeleton h-20 w-20 rounded-lg" />

@@ -6,7 +6,7 @@ export default function PremiumMoodboard({ items, className }) {
   const sortedItems = [...items].sort((a, b) => (order[a.category] || 99) - (order[b.category] || 99));
 
   return (
-    <div className={cn("relative aspect-[4/5] w-full max-w-sm mx-auto overflow-hidden rounded-xl bg-white shadow-inner", className)}>
+    <div className={cn("relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-white shadow-inner", className)}>
       {sortedItems.map((item, i) => {
         let style = {};
         // Remove random rotation, keep it perfectly straight and clean

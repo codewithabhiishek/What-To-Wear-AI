@@ -11,7 +11,7 @@ export default function OutfitCard({
 }) {
   const { score, items } = outfit;
   return (
-    <div className="rounded-2xl border bg-card p-4 shadow-sm">
+    <div className="w-full max-w-md mx-auto rounded-2xl border bg-card p-4 shadow-sm">
       <OutfitMedia items={items} occasion={occasion} />
 
       <div className="mt-3 flex items-start justify-between gap-3">
