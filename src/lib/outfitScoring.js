@@ -92,12 +92,12 @@ function formalityScore(items, targetRange) {
   const avg = fs.reduce((a, b) => a + b, 0) / fs.length;
   const spread = max - min;
 
-  let score = 70; // Base score
-  let reason = "Formality matches occasion";
+  let score = 50; // Base score
+  let reason = "Formality is acceptable";
 
   // Check internal consistency
   if (spread > 1) {
-    score -= (spread - 1) * 35;
+    score -= (spread - 1) * 45;
     reason = "Formality clash between items";
   }
 
@@ -105,14 +105,17 @@ function formalityScore(items, targetRange) {
   const targetMid = (targetRange[0] + targetRange[1]) / 2;
 
   if (avg < targetRange[0]) {
-    score -= (targetRange[0] - avg) * 35;
+    score -= (targetRange[0] - avg) * 40;
     reason = "Too casual for the occasion";
   } else if (avg > targetRange[1]) {
-    score -= (avg - targetRange[1]) * 35;
+    score -= (avg - targetRange[1]) * 40;
     reason = "Too formal for the occasion";
   } else if (Math.abs(avg - targetMid) <= 0.5 && spread <= 1) {
-    score += 30; // Perfect match
+    score = 100; // Perfect match
     reason = "Perfect formality match";
+  } else if (Math.abs(avg - targetMid) <= 1 && spread <= 1) {
+    score = 80;
+    reason = "Good formality match";
   }
 
   return { score: clamp(score, 0, 100), reason };
@@ -122,29 +125,29 @@ function formalityScore(items, targetRange) {
 function silhouetteScore(items) {
   const top = items.find((i) => i.category === "top");
   const bottom = items.find((i) => i.category === "bottom");
-  if (!top || !bottom) return { score: 75, reason: "Standard fit" };
+  if (!top || !bottom) return { score: 65, reason: "Standard fit" };
 
   const tf = top.fit;
   const bf = bottom.fit;
 
   if ((tf === "oversized" && bf === "fitted") || (tf === "fitted" && bf === "oversized")) {
-    return { score: 100, reason: "Great silhouette balance" };
+    return { score: 100, reason: "Excellent silhouette balance" };
   }
 
   if ((tf === "oversized" && bf === "regular") || (tf === "regular" && bf === "oversized") ||
       (tf === "fitted" && bf === "regular") || (tf === "regular" && bf === "fitted")) {
-    return { score: 85, reason: "Good proportions" };
+    return { score: 80, reason: "Good proportions" };
   }
 
   if (tf === "oversized" && bf === "oversized") {
-    return { score: 40, reason: "Too baggy (both oversized)" };
+    return { score: 20, reason: "Too baggy (both oversized)" };
   }
 
   if (tf === "fitted" && bf === "fitted") {
-    return { score: 50, reason: "Too tight (both fitted)" };
+    return { score: 35, reason: "Too tight (both fitted)" };
   }
 
-  return { score: 75, reason: "Standard regular fit" };
+  return { score: 65, reason: "Standard regular fit" };
 }
 
 // ---- Rule 3: Color harmony (20%) -------------------------------------------
@@ -152,22 +155,22 @@ function colorScore(items) {
   const bold = items.filter((i) => !isNeutralColor(i.color_primary));
 
   if (bold.length === 0) {
-    return { score: 90, reason: "Clean neutral palette" };
+    return { score: 85, reason: "Clean neutral palette" };
   }
   if (bold.length === 1) {
-    return { score: 100, reason: "Balanced color pop" };
+    return { score: 100, reason: "Perfect color pop" };
   }
   if (bold.length === 2) {
-    return { score: 50, reason: "Clashing bold colors" };
+    return { score: 40, reason: "Clashing bold colors" };
   }
 
-  return { score: 20, reason: "Too many loud colors" };
+  return { score: 10, reason: "Too many loud colors" };
 }
 
 // ---- Rule 4: Variety / recently worn (15%) ---------------------------------
 function recencyScore(items, ctx) {
   const ids = items.map((i) => i.id);
-  let score = 75; // Base score
+  let score = 65; // Base score
   let reasons = [];
 
   let recentPairHits = 0;
@@ -178,7 +181,7 @@ function recencyScore(items, ctx) {
   }
 
   if (recentPairHits > 0) {
-    score -= recentPairHits * RECENT_PAIR_PENALTY;
+    score -= recentPairHits * RECENT_PAIR_PENALTY; // Heavy penalty
     reasons.push("Worn together recently");
   }
 
@@ -189,7 +192,7 @@ function recencyScore(items, ctx) {
   }
 
   if (staleCount > 0 && recentPairHits === 0) {
-    score += Math.min(staleCount * STALE_ITEM_BOOST, 25);
+    score += Math.min(staleCount * STALE_ITEM_BOOST, 35);
     reasons.push("Includes unworn pieces");
   }
 
@@ -206,10 +209,10 @@ function patternScore(items) {
     return { score: 85, reason: "Clean solid patterns" };
   }
   if (patterned.length === 1) {
-    return { score: 100, reason: "Good pattern balance" };
+    return { score: 100, reason: "Good pattern pop" };
   }
 
-  return { score: 30, reason: "Clashing patterns" };
+  return { score: 10, reason: "Clashing patterns" };
 }
 
 // ---- Blend + combo generation ----------------------------------------------
@@ -227,6 +230,23 @@ function scoreCombo(items, targetRange, ctx) {
     r.score * SCORING_WEIGHTS.recency +
     p.score * SCORING_WEIGHTS.pattern
   );
+
+  // DEBUG OUTPUT (As requested)
+  console.log(`
+--- OUTFIT SCORE DEBUGGING ---
+Items: ${items.map(i => `${i.category}(${i.color_primary} ${i.fit})`).join(" + ")}
+Occasion: ${JSON.stringify(targetRange)}
+------------------------------
+Formality:  ${f.score.toFixed(1)} (${f.reason})
+Silhouette: ${s.score.toFixed(1)} (${s.reason})
+Color:      ${c.score.toFixed(1)} (${c.reason})
+Pattern:    ${p.score.toFixed(1)} (${p.reason})
+Variety:    ${r.score.toFixed(1)} (${r.reason})
+Weather:    N/A
+------------------------------
+FINAL SCORE: ${score}
+==============================
+`);
 
   return {
     items,

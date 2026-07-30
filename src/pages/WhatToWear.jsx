@@ -20,8 +20,10 @@ function describeItem(item) {
 function buildExplanationPrompt(outfit, occasion) {
   const list = outfit.items.map(describeItem).join(", ");
   return `Given this outfit: ${list} for the occasion: ${occasion},
-write one natural sentence (max 25 words) explaining why this outfit works —
-reference the actual color/fit/formality choices. Do not use generic phrases like "great choice."`;
+write one concise and specific sentence (max 25 words) explaining exactly WHY the recommendation is strong.
+Reference the actual color/fit/formality choices and how they balance each other.
+Do NOT use generic phrases like "The outfit works well", "Great choice", or "This is a good outfit."
+Example format: "The relaxed jeans balance the structured checked shirt, creating a casual look that's appropriate for everyday wear."`;
 }
 
 export default function WhatToWear() {
@@ -193,6 +195,7 @@ export default function WhatToWear() {
                 return (
                   <motion.div
                     key={key}
+                    className={idx === 0 ? "sm:col-span-2 xl:col-span-3" : ""}
                     variants={{
                       hidden: { opacity: 0, y: 16 },
                       show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
@@ -201,6 +204,7 @@ export default function WhatToWear() {
                     <OutfitCard
                       outfit={outfit}
                       explanation={outfit.explanation}
+                      isFeatured={idx === 0}
                       isLogging={
                         loggingId === outfit.items.map((i) => i.id).join(",")
                       }
