@@ -59,19 +59,15 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
     if (!file || !user) return;
     setError(null);
     try {
-      // 1. Remove background client-side
+      // 1. Remove background client-side (using default high-quality model for sharpness)
       setPhase(PHASE.PROCESSING_BG);
       const { removeBackground } = await import("@imgly/background-removal");
       
-      // Explicitly use the 'small' model for maximum speed
-      const transparentBlob = await removeBackground(file, {
-        model: "small",
-        output: { format: "image/webp", quality: 0.8 },
-      });
+      const transparentBlob = await removeBackground(file);
       
       // Convert Blob to File to pass to Vercel Blob
-      // .webp extension because we used webp for speed
-      const cleanFile = new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: "image/webp" });
+      // .png extension for maximum lossless quality and transparency
+      const cleanFile = new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: "image/png" });
 
       // 2. Upload the processed photo to Vercel Blob via our serverless function
       setPhase(PHASE.UPLOADING);

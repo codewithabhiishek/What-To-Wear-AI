@@ -26,7 +26,7 @@ function FormalityDots({ value }) {
 export default function ClosetItemCard({ item, onDelete, onEdit }) {
   return (
     <div className="group relative overflow-hidden rounded-xl border bg-card shadow-sm">
-      <div className="aspect-[3/4] w-full bg-muted">
+      <div className="aspect-[3/4] w-full bg-white">
         <Image
           src={item.image_url}
           alt={item.color_primary || "clothing item"}
