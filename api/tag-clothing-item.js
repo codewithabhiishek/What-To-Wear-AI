@@ -1,9 +1,34 @@
 import OpenAI from "openai";
 
+async function fetchWithRetry(fn, retries = 2, delayMs = 1000) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      console.warn(`[Llama 3.2 Vision Retry] Attempt ${attempt + 1}/${retries + 1} failed: ${err.message}`);
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs * Math.pow(2, attempt)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+
+  const fallbackTags = {
+    category: "top",
+    color_primary: "black",
+    pattern: "solid",
+    fit: "regular",
+    formality: 3,
+    season: "all-season",
+  };
 
   try {
     const { imageUrl } = req.body;
@@ -12,28 +37,26 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'imageUrl is required' });
     }
 
-    const fallbackTags = {
-      category: "top",
-      color_primary: "black",
-      pattern: "solid",
-      fit: "regular",
-      formality: 3,
-      season: "all-season",
-    };
+    const apiKey = process.env.NVIDIA_API_KEY;
 
-    if (!process.env.NVIDIA_API_KEY) {
-      console.warn("NVIDIA_API_KEY missing. Returning default tags.");
+    if (!apiKey) {
+      console.warn("[Llama 3.2 Vision] Missing NVIDIA_API_KEY. Returning default fallback tags.");
       return res.status(200).json(fallbackTags);
     }
 
-    try {
-      const openai = new OpenAI({ 
-        baseURL: "https://integrate.api.nvidia.com/v1", 
-        apiKey: process.env.NVIDIA_API_KEY 
-      });
+    const openai = new OpenAI({ 
+      baseURL: "https://integrate.api.nvidia.com/v1", 
+      apiKey,
+      timeout: 25000, // 25 second timeout per attempt
+    });
 
-      // Download the image as base64 to send to OpenAI
+    const json = await fetchWithRetry(async () => {
+      // Download the image as base64 to send to OpenAI format
       const imageResp = await fetch(imageUrl);
+      if (!imageResp.ok) {
+        throw new Error(`Failed to fetch image from URL (${imageResp.status})`);
+      }
+
       const arrayBuffer = await imageResp.arrayBuffer();
       const base64Data = Buffer.from(arrayBuffer).toString('base64');
       const rawMime = imageResp.headers.get('content-type') || 'image/jpeg';
@@ -69,18 +92,15 @@ export default async function handler(req, res) {
         max_tokens: 1024,
       });
 
-      // Llama 3.2 Vision on NVIDIA sometimes wraps JSON in markdown blocks
       let text = response.choices[0]?.message?.content || "{}";
       text = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      
-      const json = JSON.parse(text);
-      return res.status(200).json(json);
-    } catch (innerError) {
-      console.error('NVIDIA API call failed, falling back to manual tag review:', innerError);
-      return res.status(200).json(fallbackTags);
-    }
+      return JSON.parse(text);
+    });
+
+    return res.status(200).json(json);
+
   } catch (error) {
-    console.error('Error in tag-clothing-item:', error);
-    res.status(500).json({ error: error.message });
+    console.error('[Llama 3.2 Vision Error] Final failure after retries:', error.message || error);
+    return res.status(200).json(fallbackTags);
   }
 }

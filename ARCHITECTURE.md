@@ -28,9 +28,9 @@ This document is the single source of truth for the technical design, data flow,
 what-to-wear-ai/
 ├── api/                          # Vercel serverless functions
 │   ├── upload-photo.js           # Streams upload → Vercel Blob, returns public URL
-│   ├── tag-clothing-item.js      # NVIDIA Vision → structured JSON tags
-│   ├── generate-outfit-explanation.js  # NVIDIA text → short natural outfit rationale
-│   └── visualize-outfit.js       # Returns a Pollinations.ai image URL for the outfit
+│   ├── tag-clothing-item.js      # Llama 3.2 90B Vision → structured JSON tags (with retries & 25s timeout)
+│   ├── generate-outfit-explanation.js  # DeepSeek V4 Flash → short natural outfit rationale (with retries & 10s timeout)
+│   └── visualize-outfit.js       # Qwen Image model → high-resolution e-commerce outfit photograph
 │
 ├── src/
 │   ├── api/
