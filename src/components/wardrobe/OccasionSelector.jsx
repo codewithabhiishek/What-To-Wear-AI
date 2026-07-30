@@ -27,7 +27,7 @@ export default function OccasionSelector({
                 : "border-border text-muted-foreground hover:border-foreground/50 hover:text-foreground",
             )}
           >
-            {o.label}
+            {o.icon} {o.label}
           </button>
         ))}
       </div>

@@ -16,13 +16,13 @@ export const OCCASION_FORMALITY = {
 
 // The chips shown on the "What to wear?" screen.
 export const OCCASIONS = [
-  { key: "college", label: "College" },
-  { key: "office", label: "Office" },
-  { key: "date", label: "Date" },
-  { key: "party", label: "Party" },
-  { key: "gym", label: "Gym" },
-  { key: "casual", label: "Casual" },
-  { key: "wedding", label: "Wedding" },
+  { key: "college", label: "College", icon: "🏫" },
+  { key: "office", label: "Office", icon: "💼" },
+  { key: "date", label: "Date", icon: "🥂" },
+  { key: "party", label: "Party", icon: "🎉" },
+  { key: "gym", label: "Gym", icon: "🏋️" },
+  { key: "casual", label: "Casual", icon: "☕" },
+  { key: "wedding", label: "Wedding", icon: "💍" },
 ];
 
 // Neutral colors pair with anything. Anything NOT listed here is treated as a

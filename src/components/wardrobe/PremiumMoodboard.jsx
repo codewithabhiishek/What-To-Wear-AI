@@ -65,7 +65,7 @@ export default function PremiumMoodboard({ items, className }) {
             <img
               src={item.image_url}
               alt={item.color_primary || item.category}
-              className="h-full w-full object-contain"
+              className="h-full w-full object-contain transition-all duration-200 ease-out hover:scale-105 hover:brightness-105 hover:drop-shadow-lg"
               style={{
                 filter:
                   "drop-shadow(0px 4px 18px rgba(0,0,0,0.13)) drop-shadow(0px 1px 4px rgba(0,0,0,0.07))",

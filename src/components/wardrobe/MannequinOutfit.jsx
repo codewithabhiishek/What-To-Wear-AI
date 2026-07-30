@@ -148,7 +148,7 @@ export default function MannequinOutfit({ items, className }) {
             <img
               src={item.image_url}
               alt={CATEGORY_LABELS[category] || category}
-              className="h-full w-full object-contain"
+              className="h-full w-full object-contain transition-all duration-200 ease-out hover:scale-105 hover:brightness-105 hover:drop-shadow-xl"
               style={{
                 filter: "drop-shadow(0px 8px 24px rgba(0,0,0,0.15)) drop-shadow(0px 2px 6px rgba(0,0,0,0.1))",
               }}

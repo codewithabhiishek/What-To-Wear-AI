@@ -4,12 +4,53 @@ import { db } from "@/api/firebaseClient";
 import { collection, doc, setDoc, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, Wand2 } from "lucide-react";
+import { Sparkles, Loader2, Wand2, Check } from "lucide-react";
 import OccasionSelector from "@/components/wardrobe/OccasionSelector";
 import OutfitCard from "@/components/wardrobe/OutfitCard";
 import EmptyState from "@/components/wardrobe/EmptyState";
-import { OutfitListSkeleton } from "@/components/wardrobe/Skeletons";
 import { generateOutfits } from "@/lib/outfitScoring";
+
+function LoadingChecklist() {
+  const steps = [
+    "Checking colors",
+    "Matching styles",
+    "Ranking combinations",
+    "Choosing the best outfits"
+  ];
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
+    }, 600);
+    return () => clearInterval(timer);
+  }, [steps.length]);
+
+  return (
+    <div className="my-8 rounded-2xl border bg-card p-6 shadow-sm max-w-md mx-auto space-y-4 text-center">
+      <div className="flex items-center justify-center gap-2">
+        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        <h3 className="font-semibold text-base">Analyzing your wardrobe…</h3>
+      </div>
+      <div className="space-y-2 text-left text-sm text-muted-foreground pt-2">
+        {steps.map((step, idx) => (
+          <div key={step} className="flex items-center gap-2.5 transition-opacity duration-300">
+            {idx < activeStep ? (
+              <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+            ) : idx === activeStep ? (
+              <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+            ) : (
+              <div className="h-4 w-4 rounded-full border border-muted-foreground/30 shrink-0" />
+            )}
+            <span className={idx <= activeStep ? "text-foreground font-medium" : "opacity-40"}>
+              {step}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function describeItem(item) {
   return `${item.color_primary} ${item.pattern} ${item.fit} ${item.category} (formality ${item.formality}${
@@ -20,10 +61,12 @@ function describeItem(item) {
 function buildExplanationPrompt(outfit, occasion) {
   const list = outfit.items.map(describeItem).join(", ");
   return `Given this outfit: ${list} for the occasion: ${occasion},
-write one concise and specific sentence (max 25 words) explaining exactly WHY the recommendation is strong.
-Reference the actual color/fit/formality choices and how they balance each other.
-Do NOT use generic phrases like "The outfit works well", "Great choice", or "This is a good outfit."
-Example format: "The relaxed jeans balance the structured checked shirt, creating a casual look that's appropriate for everyday wear."`;
+write a short, natural human phrase (UNDER 12 WORDS) describing the style vibe.
+Avoid AI jargon, analytical summaries, or robotic phrasing.
+Examples of ideal tone:
+- "Clean everyday outfit with balanced casual styling."
+- "A classic combination that's easy to wear all day."
+- "Simple, versatile, and works well for casual occasions."`;
 }
 
 export default function WhatToWear() {
@@ -33,6 +76,7 @@ export default function WhatToWear() {
   const [occasion, setOccasion] = useState("casual");
   const [freeText, setFreeText] = useState("");
   const [outfits, setOutfits] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [loggingId, setLoggingId] = useState(null);
 
@@ -62,8 +106,10 @@ export default function WhatToWear() {
   const handleGenerate = async () => {
     setGenerating(true);
     setOutfits(null);
+    setTotalCount(0);
     try {
       const combos = generateOutfits(items, effectiveOccasion, history);
+      setTotalCount(combos.totalCount || combos.length);
 
       // Fetch a one-line explanation per outfit from the API (in parallel).
       const explained = await Promise.all(
@@ -166,7 +212,7 @@ export default function WhatToWear() {
             </p>
           )}
 
-          {generating && <OutfitListSkeleton count={3} />}
+          {generating && <LoadingChecklist />}
 
           {!generating && outfits && outfits.length === 0 && (
             <EmptyState
@@ -177,42 +223,54 @@ export default function WhatToWear() {
           )}
 
           {!generating && outfits && outfits.length > 0 && (
-            <motion.div 
-              className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch"
-              variants={{
-                hidden: { opacity: 0 },
-                show: {
-                  opacity: 1,
-                  transition: { staggerChildren: 0.04 }
-                }
-              }}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "100px" }}
-            >
-              {outfits.map((outfit, idx) => {
-                const key = outfit.items.map((i) => i.id).join(",") + idx;
-                return (
-                  <motion.div
-                    key={key}
-                    variants={{
-                      hidden: { opacity: 0, y: 16 },
-                      show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
-                    }}
-                  >
-                    <OutfitCard
-                      outfit={outfit}
-                      explanation={outfit.explanation}
-                      isFeatured={idx === 0}
-                      isLogging={
-                        loggingId === outfit.items.map((i) => i.id).join(",")
-                      }
-                      onWoreThis={() => handleWoreThis(outfit)}
-                    />
-                  </motion.div>
-                );
-              })}
-            </motion.div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b pb-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span>Found <strong className="text-foreground font-semibold">{totalCount || outfits.length * 2}</strong> possible combinations</span>
+                </div>
+                <span className="text-xs bg-muted px-2.5 py-1 rounded-full font-medium">
+                  Showing top {outfits.length} matches
+                </span>
+              </div>
+
+              <motion.div 
+                className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.04 }
+                  }
+                }}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "100px" }}
+              >
+                {outfits.map((outfit, idx) => {
+                  const key = outfit.items.map((i) => i.id).join(",") + idx;
+                  return (
+                    <motion.div
+                      key={key}
+                      variants={{
+                        hidden: { opacity: 0, y: 16 },
+                        show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
+                      }}
+                    >
+                      <OutfitCard
+                        outfit={outfit}
+                        explanation={outfit.explanation}
+                        isFeatured={idx === 0}
+                        isLogging={
+                          loggingId === outfit.items.map((i) => i.id).join(",")
+                        }
+                        onWoreThis={() => handleWoreThis(outfit)}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </div>
           )}
         </>
       )}

@@ -298,8 +298,11 @@ export function generateOutfits(items, occasion, history) {
     }
   }
 
-  return combos
+  const validCombos = combos
     .filter((c) => c.score >= MIN_SCORE)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, MAX_RESULTS);
+    .sort((a, b) => b.score - a.score);
+
+  const topOutfits = validCombos.slice(0, MAX_RESULTS);
+  topOutfits.totalCount = validCombos.length;
+  return topOutfits;
 }
