@@ -162,16 +162,6 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
               </div>
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row">
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-background px-6 py-4 shadow-sm transition-colors hover:bg-muted">
-                  <Upload className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium text-foreground">Upload Photo</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => processFile(e.target.files?.[0])}
-                  />
-                </label>
                 <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-primary px-6 py-4 text-primary-foreground shadow-sm hover:bg-primary/90">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
                   <span className="font-medium">Take Photo</span>
@@ -179,6 +169,16 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
                     type="file"
                     accept="image/*"
                     capture="environment"
+                    className="hidden"
+                    onChange={(e) => processFile(e.target.files?.[0])}
+                  />
+                </label>
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-background px-6 py-4 shadow-sm transition-colors hover:bg-muted">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium text-foreground">Upload Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
                     className="hidden"
                     onChange={(e) => processFile(e.target.files?.[0])}
                   />
