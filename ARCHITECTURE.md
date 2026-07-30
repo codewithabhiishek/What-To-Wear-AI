@@ -17,7 +17,7 @@ This document is the single source of truth for the technical design, data flow,
 | Serverless API | Vercel Serverless Functions (`/api/*`) |
 | AI — Vision tagging | NVIDIA NIM · `meta/llama-3.2-90b-vision-instruct` |
 | AI — Text explanations | NVIDIA NIM · `meta/llama-3.1-8b-instruct` |
-| AI — Outfit image gen | Pollinations.ai (`flux` model, free, no auth) |
+| Image Pre-Processing | `heic2any` (iPhone HEIC/HEIF conversion), Canvas EXIF orientation & 1400px downscaling |
 | Background removal | `@imgly/background-removal` (runs fully in the browser, WASM) |
 
 ---
@@ -29,7 +29,7 @@ what-to-wear-ai/
 ├── api/                          # Vercel serverless functions
 │   ├── upload-photo.js           # Streams upload → Vercel Blob, returns public URL
 │   ├── tag-clothing-item.js      # NVIDIA Vision → structured JSON tags
-│   ├── generate-outfit-explanation.js  # NVIDIA text → one-sentence outfit rationale
+│   ├── generate-outfit-explanation.js  # NVIDIA text → short natural outfit rationale
 │   └── visualize-outfit.js       # Returns a Pollinations.ai image URL for the outfit
 │
 ├── src/
@@ -38,16 +38,17 @@ what-to-wear-ai/
 │   ├── lib/
 │   │   ├── AuthContext.jsx       # Auth state (onAuthStateChanged), logout helper
 │   │   ├── ThemeProvider.jsx     # Light / dark / system theme via localStorage
-│   │   ├── outfitScoring.js      # Client-side outfit combination & scoring engine
+│   │   ├── outfitScoring.js      # Client-side outfit combination & additive/subtractive scoring engine
+│   │   ├── imageUtils.js         # HEIC conversion, EXIF orientation, downscaling & timing logs
 │   │   ├── visualizeOutfit.js    # Outfit image prompt builder + localStorage cache
-│   │   ├── wardrobeConstants.js  # Occasions, category/pattern/fit/season/formality enums
+│   │   ├── wardrobeConstants.js  # Occasions with icons, category/pattern/fit/season/formality enums
 │   │   ├── authReturnTo.js       # Safe same-origin ?returnTo= resolution
 │   │   ├── query-client.js       # Shared TanStack QueryClient instance
 │   │   ├── utils.js              # `cn()` (clsx + tailwind-merge)
 │   │   └── PageNotFound.jsx      # 404 fallback page
 │   ├── pages/
-│   │   ├── Closet.jsx            # Browse, upload, edit, delete clothing items
-│   │   ├── WhatToWear.jsx        # Generate & display ranked outfit suggestions
+│   │   ├── Closet.jsx            # Browse, search, category filter, sort, upload, edit, delete items
+│   │   ├── WhatToWear.jsx        # Generate & display ranked outfit suggestions with loading checklist
 │   │   ├── History.jsx           # View previously logged outfits
 │   │   ├── Settings.jsx          # Update display name, sign out
 │   │   ├── Login.jsx             # Email/password + Google sign-in
@@ -65,14 +66,15 @@ what-to-wear-ai/
 │   │   ├── ui/                   # shadcn/ui primitives (generated, do not hand-edit)
 │   │   └── wardrobe/
 │   │       ├── ClosetItemCard.jsx    # Single clothing item tile (edit/delete)
-│   │       ├── UploadItemDialog.jsx  # Multi-phase upload → background removal → tag → save
+│   │       ├── UploadItemDialog.jsx  # Multi-stage upload → pre-resize → bg removal → tag → save
 │   │       ├── EditItemDialog.jsx    # Fix AI tags on an existing item
 │   │       ├── TagEditor.jsx         # Inline form for all 7 clothing attributes
-│   │       ├── OccasionSelector.jsx  # Chip picker + free-text for occasion
-│   │       ├── OutfitCard.jsx        # Ranked outfit card with score + "I wore this"
+│   │       ├── OccasionSelector.jsx  # Chip picker with emoji icons + free-text for occasion
+│   │       ├── OutfitCard.jsx        # Pixel-perfect standardized outfit card with match badge
+│   │       ├── OutfitDetailDialog.jsx# Click-to-expand modal for high-res preview & full breakdown
 │   │       ├── OutfitMedia.jsx       # Tab switcher: flat-lay moodboard vs. on-mannequin
-│   │       ├── PremiumMoodboard.jsx  # Editorial flat-lay grid using real item photos
-│   │       ├── MannequinOutfit.jsx   # Composite item images onto SVG mannequin silhouette
+│   │       ├── PremiumMoodboard.jsx  # Editorial 4/5 flat-lay grid using real item photos with hover scaling
+│   │       ├── MannequinOutfit.jsx   # Minimalist fashion SVG mannequin silhouette (4/5 ratio)
 │   │       ├── OutfitThumbnails.jsx  # Small row of item thumbnails (History page)
 │   │       ├── EmptyState.jsx        # Dashed-border empty state with icon + CTA
 │   │       └── Skeletons.jsx         # Shimmer loading skeletons for closet & outfit lists
@@ -123,26 +125,31 @@ Firebase Authentication handles all auth. There is no custom auth server.
 
 ---
 
-## 5. Clothing Item Data Flow
+## 5. Optimized Clothing Upload Pipeline (`src/lib/imageUtils.js` & `UploadItemDialog.jsx`)
 
-How a clothing item goes from phone camera → Firestore:
+How a clothing item goes from a camera photo (e.g. iPhone HEIC/HEIF or 12MP JPEG) → Firestore:
 
 ```
-1. User opens UploadItemDialog
-   └─ PHASE: SELECT
+1. User opens UploadItemDialog & selects photo
+   └─ PHASE: PREPARING
+      ├── HEIC/HEIF Conversion: Dynamic import of heic2any converts camera files to JPEG Blob.
+      ├── EXIF Orientation: createImageBitmap({ imageOrientation: "from-image" }) corrects rotation.
+      └── Pre-Resize: Downscales 12MP (4032x3024) photo to max 1400px longest side.
+          (Reduces pixel count by 88%, accelerating background removal by 10x).
 
-2. User picks a photo (camera or file picker)
+2. Pre-resized Blob → Client-Side Background Removal
    └─ PHASE: PROCESSING_BG
-      @imgly/background-removal runs WASM in the browser
-      → transparent PNG blob
+      @imgly/background-removal processes 1400px JPEG in WebAssembly.
+      ├── Timeout Protection: 30-second AbortController safeguard.
+      └── Fallback: On timeout/failure, automatically falls back to clean pre-resized JPEG.
 
-3. Transparent PNG → POST /api/upload-photo
+3. Processed Photo → POST /api/upload-photo
    └─ PHASE: UPLOADING
-      Vercel Blob stores it, returns a public HTTPS URL
+      Vercel Blob stores the image, returns a public HTTPS URL.
 
 4. Image URL → POST /api/tag-clothing-item
    └─ PHASE: TAGGING
-      NVIDIA Vision (llama-3.2-90b) downloads the image, returns JSON:
+      NVIDIA Vision (llama-3.2-90b) downloads image, returns JSON tags:
       { category, color_primary, color_secondary, pattern, fit, formality, material, season }
 
 5. User reviews & corrects tags in TagEditor
@@ -152,22 +159,13 @@ How a clothing item goes from phone camera → Firestore:
    └─ PHASE: SAVING
 ```
 
-**Firestore schema — `clothingItems` document:**
-
-```js
-{
-  image_url:       string,   // Vercel Blob public URL
-  category:        "top" | "bottom" | "outerwear" | "shoes" | "accessory",
-  color_primary:   string,   // e.g. "navy"
-  color_secondary: string | null,
-  pattern:         "solid" | "striped" | "printed" | "checked" | "other",
-  fit:             "fitted" | "regular" | "oversized",
-  formality:       1 | 2 | 3 | 4 | 5,
-  material:        string | null,  // e.g. "cotton"
-  season:          "summer" | "winter" | "all-season",
-  laundry_status:  "clean",        // always "clean" on create; reserved for future use
-  created_date:    ISO 8601 string
-}
+### 5.1 Performance Timing Audit
+Every upload step prints elapsed milliseconds to browser console:
+```text
+[Upload Audit] Image decode & resize completed in 85ms: 4032x3024 -> 1400x1050
+[Upload Audit] Background removal completed in 1180ms
+[Upload Audit] Vercel Blob upload completed in 390ms
+[Upload Audit] AI Tagging API completed in 720ms
 ```
 
 ---
@@ -182,113 +180,50 @@ Runs entirely on the client — no server round-trip — so suggestions appear i
 2. Build all `top × bottom × shoe` combos. If the user owns no shoes, degrade gracefully to `top × bottom`.
 3. For each base combo, also generate versions that include each `outerwear` piece.
 
-### 6.2 Scoring Rules (weights must sum to 1.0)
+### 6.2 Scoring Rules (weights sum to 1.0)
 
 | # | Rule | Weight | How it works |
 |---|---|---|---|
-| 1 | **Formality match** | 30% | Average formality of all items must fall inside the occasion's target range. A spread > 1 point between items is also penalised. |
-| 2 | **Silhouette balance** | 25% | Oversized top + fitted bottom (or vice versa) → 100. Same fit × same fit → lower scores. Oversized + oversized → 45. |
-| 3 | **Color harmony** | 20% | ≤ 1 bold color → 100. Two bold colors → 50. Three+ → 25. Neutrals (black, white, grey, navy, beige…) never count as bold. |
-| 4 | **Variety / recency** | 15% | Pairs worn together in the last 7 days are penalised (`RECENT_PAIR_PENALTY = 30`). Items unworn for 14+ days get a small boost (`STALE_ITEM_BOOST = 5`, capped at 15). |
-| 5 | **Pattern clash** | 10% | ≤ 1 patterned item → 100. Two patterns → 50. Three+ → 20. |
+| 1 | **Formality match** | 30% | Formality of items must fall inside the occasion's target range. Large spreads (>1 point) incur heavy penalties. |
+| 2 | **Silhouette balance** | 25% | Oversized top + fitted bottom (or vice versa) → 100. Double oversized fits incur heavy penalties (`20`). |
+| 3 | **Color harmony** | 20% | ≤ 1 bold color → 100. Two bold colors → 40. Three+ → 10. Neutrals (black, white, grey, navy, beige…) never count as bold. |
+| 4 | **Variety / recency** | 15% | Pairs worn together in the last 7 days are heavily penalised (`RECENT_PAIR_PENALTY = 50`). Unworn items get a rotation boost. |
+| 5 | **Pattern clash** | 10% | ≤ 1 patterned item → 100. Multiple patterns incur heavy penalties (`10`). |
 
-- **`MIN_SCORE = 60`** — combos below this are discarded.
-- **`MAX_RESULTS = 5`** — top 5 results are returned, sorted descending.
-
-### 6.3 Occasion → Formality Target Range
-
-```js
-gym:     [1, 2]   casual:  [1, 3]   college: [2, 3]
-office:  [3, 4]   date:    [3, 4]   party:   [3, 5]   wedding: [4, 5]
-// Free-text occasion → flexible mid-range [2, 4]
-```
+- **`MIN_SCORE = 40`** — combos below this are discarded.
+- **`MAX_RESULTS = 5`** — top 5 results are returned. `generateOutfits` attaches `totalCount` to the array so the UI can render *"Found X combinations • Showing top 5 matches"*.
 
 ---
 
-## 7. AI Outfit Explanations
+## 7. UI Standardization & Modals
 
-For each of the top 5 outfits, the app fires a parallel `fetch` to `/api/generate-outfit-explanation` with a structured text prompt describing the items (color, fit, formality, pattern) and the occasion.
+### 7.1 Uniform Recommendation Grid
+- **Responsive Breakpoints:** 1 column on mobile, 2 on tablet, 3 on desktop (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`).
+- **Fixed Section Heights:** Cards enforce a fixed 40px explanation box (`line-clamp-2`), fixed badge row (`h-6`), and pinned button baseline (`h-8`). Cards are 100% pixel-perfect identical.
+- **Click-to-Expand Modal (`OutfitDetailDialog.jsx`):** Clicking any recommendation card opens a modal with a high-res preview, untruncated style rationale, and garment attribute badges.
 
-- **Model:** `meta/llama-3.1-8b-instruct` via NVIDIA NIM
-- **Timeout:** 6 seconds per request (AbortController). On timeout or API failure, the explanation gracefully falls back to an empty string — the UI shows a generic placeholder.
-- The explanation is stored alongside `item_ids` and `occasion` when the user logs an outfit.
-
----
-
-## 8. Outfit Visualization (`src/lib/visualizeOutfit.js`)
-
-The `OutfitMedia` component offers two viewing modes toggled by the user:
-
-### Flat-lay Moodboard (default)
-`PremiumMoodboard.jsx` renders the user's actual clothing photos in an editorial grid layout (top + outerwear in the upper row, bottom full-width, shoes + accessories below). No external API call.
-
-### On-Mannequin View
-`MannequinOutfit.jsx` composites the user's real item photos over an inline SVG mannequin silhouette using absolute positioning and z-index layering. Also no external API call — this is a pure CSS/SVG composite.
-
-### AI-Generated Image (via `visualizeOutfit.js`)
-A third path exists (`/api/visualize-outfit`) for generating a photorealistic image of the outfit via **Pollinations.ai** (free, no authentication required). It uses the `flux` model at 768×1024.
-
-- Results are cached in **localStorage** keyed by sorted item IDs + occasion (`wardrobe_viz_v2_` prefix) to avoid redundant generation.
-- This path is not currently wired into the default UI flow but the infrastructure is in place.
+### 7.2 Closet Search & Filtering (`Closet.jsx`)
+- **Real-Time Search:** Search wardrobe by color, category, pattern, or material.
+- **Category Filter Pills:** Quick toggle between *All*, *Tops*, *Bottoms*, *Shoes*, and *Outerwear*.
+- **Sorting:** Sort items by *Newest*, *Formality*, or *Category*.
 
 ---
 
-## 9. History & Recency Loop
+## 8. Recommended Free APIs for Project Enhancement
 
-When a user taps **"I wore this"** on an outfit card:
+To take **What To Wear AI** even further without incurring costs:
 
-```
-OutfitCard → handleWoreThis()
-  → Firestore: users/{userId}/outfitHistory/{autoId}
-    { item_ids, occasion, explanation, created_date }
-  → load() re-fetches history
-  → Next generateOutfits() call reads updated history
-    → Recency rule deprioritises recently worn pairs
-```
+### 8.1 Weather Integration (OpenWeatherMap or WeatherAPI)
+- **Use Case:** Fetch local weather via browser geolocation, feeding temperature into `outfitScoring.js`.
+- **Enhancement:** Boost `season: "winter"` items when cold, or mandate `outerwear` if raining.
+- **Free Tier:** OpenWeatherMap offers 1,000 free API calls/day.
 
-This closes the feedback loop: the more you log, the better the next suggestions avoid repetition.
+### 8.2 Precise Color Palette Analysis (TheColorAPI / Cloudinary)
+- **Use Case:** Extract exact HEX codes from garment images instead of single color string labels.
+- **Enhancement:** Calculate exact complementary or triadic color harmonies mathematically.
+- **Free Tier:** TheColorAPI is 100% free.
 
----
-
-## 10. Firestore Data Model (Summary)
-
-```
-users/
-  {userId}/
-    clothingItems/
-      {itemId} → see Section 5 schema
-    outfitHistory/
-      {entryId}:
-        item_ids:     string[]   // IDs of ClothingItems in the outfit
-        occasion:     string
-        explanation:  string
-        created_date: ISO 8601 string
-```
-
-All reads are `getDocs` (one-shot fetches on mount). There are no real-time listeners (`onSnapshot`) in the current implementation — the app re-fetches after every mutation via the `load()` callback pattern.
-
----
-
-## 11. Recommended Free APIs for Project Enhancement
-
-To take the **What To Wear AI** project to the next level without incurring costs, consider integrating the following APIs with generous free tiers:
-
-### 11.1 Weather Integration (OpenWeatherMap or WeatherAPI)
-- **Use Case:** Automatically fetch the user's local weather based on their IP or browser geolocation, and feed the temperature/conditions into the `outfitScoring.js` engine.
-- **Enhancement:** The app can automatically boost `season: "winter"` items when it's cold, or mandate an `outerwear` item if it's raining, without the user explicitly asking.
-- **Free Tier:** OpenWeatherMap offers 1,000 API calls per day for free. WeatherAPI offers 1,000,000 calls per month for free.
-
-### 11.2 Precise Color Palette Analysis (TheColorAPI or Cloudinary)
-- **Use Case:** Instead of relying solely on NVIDIA Vision to guess a string like "navy", extract the exact HEX color codes and complimentary palettes from the garment image.
-- **Enhancement:** Can dramatically improve the **Color harmony** scoring rule by mathematically calculating complementary, analogous, or triadic color matches rather than string comparisons.
-- **Free Tier:** TheColorAPI is completely free. Cloudinary offers a generous free tier that includes automatic color extraction metadata when uploading images.
-
-### 11.3 Real-World Style Inspiration (Unsplash API)
-- **Use Case:** When an outfit is generated (e.g., "navy oversized top + beige regular bottom"), search an image API for real-life models or flat-lays wearing a similar combination.
-- **Enhancement:** Shows a "See it in the wild" moodboard next to the outfit suggestion to provide styling inspiration (how to cuff the jeans, how to tuck the shirt).
-- **Free Tier:** Unsplash API provides 50 requests per hour for free, which is plenty for personal/portfolio use.
-
-### 11.4 IP Geolocation (IP-API)
-- **Use Case:** Getting user location without an intrusive browser prompt.
-- **Enhancement:** Use it to silently fetch the user's city/country on load, which then feeds the Weather API instantly.
-- **Free Tier:** Free for non-commercial use, no API key required (rate limited to 45 requests per minute).
+### 8.3 Style Inspiration (Unsplash API)
+- **Use Case:** Search for real-world outfit lookbooks matching the user's item combinations.
+- **Enhancement:** Shows a "See it in the wild" moodboard next to outfit suggestions.
+- **Free Tier:** 50 requests/hour free.
