@@ -14,8 +14,8 @@ export default function OutfitMedia({ items, isFeatured }) {
 
   return (
     <div className="space-y-2.5 p-3">
-      {/* Header bar with proper padding & no overflow */}
-      <div className="flex items-center justify-between gap-2 px-1">
+      {/* Header bar - 100% identical height and layout across all cards */}
+      <div className="flex h-7 items-center justify-start gap-2 px-1">
         <div className="inline-flex rounded-full border bg-muted/40 p-0.5">
           <ViewTab
             active={mode === "flat"}
@@ -30,20 +30,15 @@ export default function OutfitMedia({ items, isFeatured }) {
             label="On mannequin"
           />
         </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          {isFeatured && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm">
-              <Sparkles className="h-3 w-3" /> Best Match
-            </span>
-          )}
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-            {items.length} Pcs
-          </span>
-        </div>
       </div>
 
+      {/* Image container with absolute corner overlay badge */}
       <div className="relative overflow-hidden rounded-xl">
+        {isFeatured && (
+          <span className="absolute top-2 left-2 z-20 inline-flex items-center gap-1 rounded-full bg-primary/95 px-2 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm backdrop-blur-sm pointer-events-none">
+            <Sparkles className="h-3 w-3" /> Best Match
+          </span>
+        )}
         {mode === "flat" ? (
           <PremiumMoodboard items={items} />
         ) : (
