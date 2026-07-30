@@ -1,4 +1,4 @@
-import Groq from "groq-sdk";
+import OpenAI from "openai";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,15 +14,18 @@ export default async function handler(req, res) {
 
     const fallbackExplanation = "A well-balanced combination matching the formality level and color tones for this occasion.";
 
-    if (!process.env.GROQ_API_KEY) {
+    if (!process.env.NVIDIA_API_KEY) {
       return res.status(200).json({ explanation: fallbackExplanation });
     }
 
     try {
-      const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+      const openai = new OpenAI({ 
+        baseURL: "https://integrate.api.nvidia.com/v1", 
+        apiKey: process.env.NVIDIA_API_KEY 
+      });
 
-      const chatCompletion = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+      const chatCompletion = await openai.chat.completions.create({
+        model: "meta/llama-3.3-70b-instruct",
         messages: [
           { role: "user", content: prompt }
         ],
@@ -33,7 +36,7 @@ export default async function handler(req, res) {
       
       return res.status(200).json({ explanation: text });
     } catch (innerError) {
-      console.error('Groq explanation call failed, using fallback:', innerError);
+      console.error('NVIDIA explanation call failed, using fallback:', innerError);
       return res.status(200).json({ explanation: fallbackExplanation });
     }
   } catch (error) {

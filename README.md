@@ -14,7 +14,7 @@ What To Wear AI solves the daily struggle of deciding what to wear by acting as 
 ## Tech Stack
 - **Frontend**: React, Vite, Tailwind CSS, shadcn/ui
 - **Backend**: Firebase (Authentication, Firestore) and Vercel Blob (File Storage)
-- **AI**: Google Gemini API, called via Vercel Serverless Functions (keeps the API key server-side, never exposed to the browser)
+- **AI**: NVIDIA NIM API, called via Vercel Serverless Functions (keeps the API key server-side, never exposed to the browser)
 - **Deployment**: Vercel
 
 ## Getting Started
@@ -28,8 +28,8 @@ cp .env.example .env
 ```
 
 ### 2. Environment Variables
-You will need to fill in your `.env` file with credentials from Firebase and Google AI Studio. 
-*Note: Because we use Vercel Serverless Functions for the AI endpoints, `GEMINI_API_KEY` stays safely on the backend.*
+You will need to fill in your `.env` file with credentials from Firebase and NVIDIA NIM. 
+*Note: Because we use Vercel Serverless Functions for the AI endpoints, `NVIDIA_API_KEY` stays safely on the backend.*
 
 | Variable | Description | Where to get it |
 | --- | --- | --- |
@@ -37,7 +37,7 @@ You will need to fill in your `.env` file with credentials from Firebase and Goo
 | `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain | Firebase Console -> Project Settings |
 | `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID | Firebase Console -> Project Settings |
 | `VITE_FIREBASE_APP_ID` | Firebase App ID | Firebase Console -> Project Settings |
-| `GEMINI_API_KEY` | Google Gemini API Key | [Google AI Studio](https://aistudio.google.com/app/apikey) |
+| `NVIDIA_API_KEY` | NVIDIA NIM API Key | [NVIDIA Build](https://build.nvidia.com/) |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob Token | Vercel Dashboard -> Storage -> Blob |
 
 ### 3. Run Locally
