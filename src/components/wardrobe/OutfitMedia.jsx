@@ -13,9 +13,9 @@ export default function OutfitMedia({ items, isFeatured }) {
   const [mode, setMode] = useState("flat"); // "flat" | "mannequin"
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full h-full">
+    <div className="flex flex-col items-center gap-3 w-full">
       {/* Segmented Control View Switcher */}
-      <div className="flex h-9 w-full max-w-[250px] items-center rounded-full bg-muted/60 p-1 border border-border/40 shadow-2xs">
+      <div className="flex h-9 w-full max-w-[220px] items-center rounded-full bg-muted/60 p-1 border border-border/40 shadow-2xs">
         <button
           type="button"
           onClick={() => setMode("flat")}
@@ -40,21 +40,21 @@ export default function OutfitMedia({ items, isFeatured }) {
           )}
         >
           <UserRound className="h-3.5 w-3.5" />
-          On mannequin
+          Mannequin
         </button>
       </div>
 
-      {/* Hero Image Stage (Centered, No Double Borders) */}
-      <div className="relative w-full max-w-[320px] h-[340px] flex items-center justify-center overflow-hidden rounded-2xl">
+      {/* Hero Image Stage (Centered, fills the column width) */}
+      <div className="relative w-full aspect-[4/5] flex items-center justify-center overflow-hidden rounded-2xl border border-border/40 bg-muted/10">
         {isFeatured && (
-          <span className="absolute top-2 left-2 z-20 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm backdrop-blur-sm pointer-events-none">
+          <span className="absolute top-2.5 left-2.5 z-20 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm backdrop-blur-sm pointer-events-none">
             <Sparkles className="h-3 w-3" /> Best Match
           </span>
         )}
         {mode === "flat" ? (
-          <PremiumMoodboard items={items} />
+          <PremiumMoodboard items={items} className="border-0 rounded-none w-full h-full" />
         ) : (
-          <MannequinOutfit items={items} />
+          <MannequinOutfit items={items} className="border-0 rounded-none w-full h-full" />
         )}
       </div>
     </div>
