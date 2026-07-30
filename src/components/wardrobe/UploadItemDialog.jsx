@@ -38,7 +38,7 @@ const PHASE = {
   SAVING: "saving",
 };
 
-export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
+export default function UploadItemDialog({ open, onOpenChange, onSaved, onFileSelected }) {
   const { user } = useAuth();
   const [phase, setPhase] = useState(PHASE.SELECT);
   const [statusMessage, setStatusMessage] = useState("");
@@ -57,6 +57,16 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
   const handleClose = (open) => {
     if (!open) reset();
     onOpenChange(open);
+  };
+
+  const handleSelectFile = (file) => {
+    if (!file) return;
+    if (onFileSelected) {
+      onFileSelected(file);
+      handleClose(false);
+      return;
+    }
+    processFile(file);
   };
 
   const processFile = async (rawFile) => {
@@ -253,7 +263,7 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
                     accept="image/*,.heic,.heif"
                     capture="environment"
                     className="hidden"
-                    onChange={(e) => processFile(e.target.files?.[0])}
+                    onChange={(e) => handleSelectFile(e.target.files?.[0])}
                   />
                 </label>
                 <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-background px-6 py-4 shadow-sm transition-colors hover:bg-muted">
@@ -263,7 +273,7 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
                     type="file"
                     accept="image/*,.heic,.heif"
                     className="hidden"
-                    onChange={(e) => processFile(e.target.files?.[0])}
+                    onChange={(e) => handleSelectFile(e.target.files?.[0])}
                   />
                 </label>
               </div>

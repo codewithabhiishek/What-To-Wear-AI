@@ -5,12 +5,13 @@ import { collection, query, orderBy, getDocs, deleteDoc, doc } from "firebase/fi
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Shirt, Search, SlidersHorizontal } from "lucide-react";
+import { Plus, Shirt, Search } from "lucide-react";
 import ClosetItemCard from "@/components/wardrobe/ClosetItemCard";
 import UploadItemDialog from "@/components/wardrobe/UploadItemDialog";
 import EditItemDialog from "@/components/wardrobe/EditItemDialog";
 import EmptyState from "@/components/wardrobe/EmptyState";
 import { ClosetGridSkeleton } from "@/components/wardrobe/Skeletons";
+import { executeUploadPipeline } from "@/lib/uploadPipeline";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_FILTERS = [
@@ -34,7 +35,7 @@ export default function Closet() {
     if (!user) return;
     const q = query(collection(db, "users", user.id, "clothingItems"), orderBy("created_date", "desc"));
     const snapshot = await getDocs(q);
-    const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     setItems(list);
   }, [user]);
 
@@ -43,14 +44,92 @@ export default function Closet() {
   }, [load]);
 
   const handleDelete = async (item) => {
+    // If it's an in-flight optimistic item, remove it immediately from state
+    if (item.isOptimistic) {
+      setItems((prev) => (prev || []).filter((i) => i.id !== item.id));
+      return;
+    }
     await deleteDoc(doc(db, "users", user.id, "clothingItems", item.id));
     setItems((prev) => (prev || []).filter((i) => i.id !== item.id));
+  };
+
+  // ---------------------------------------------------------------------------
+  // INSTANT 0MS OPTIMISTIC UPLOAD ENGINE
+  // ---------------------------------------------------------------------------
+  const startUploadPipeline = async (optItem) => {
+    try {
+      const savedItem = await executeUploadPipeline(
+        optItem.rawFile,
+        user.id,
+        (statusMessage) => {
+          setItems((prev) =>
+            (prev || []).map((i) =>
+              i.id === optItem.id ? { ...i, statusMessage, error: null } : i
+            )
+          );
+        }
+      );
+
+      // In-place replacement: Swap temporary card with real saved Firestore item
+      setItems((prev) =>
+        (prev || []).map((i) => (i.id === optItem.id ? savedItem : i))
+      );
+    } catch (err) {
+      console.error("[Closet Optimistic Upload Error]", err);
+      setItems((prev) =>
+        (prev || []).map((i) =>
+          i.id === optItem.id
+            ? { ...i, error: err.message || "Upload failed. Tap to retry." }
+            : i
+        )
+      );
+    }
+  };
+
+  const handleFileSelected = (rawFile) => {
+    if (!rawFile || !user) return;
+
+    const tempId = "temp_" + Date.now();
+    const previewUrl = URL.createObjectURL(rawFile);
+
+    const optimisticItem = {
+      id: tempId,
+      previewUrl,
+      rawFile,
+      isOptimistic: true,
+      statusMessage: "Preparing photo…",
+      error: null,
+      category: "top",
+      color_primary: "Processing...",
+      fit: "regular",
+      pattern: "solid",
+      formality: 3,
+      created_date: new Date().toISOString(),
+    };
+
+    // 0ms response: Instantly append optimistic card at top of local state
+    setItems((prev) => [optimisticItem, ...(prev || [])]);
+
+    // Start background processing immediately
+    startUploadPipeline(optimisticItem);
+  };
+
+  const handleRetry = (optItem) => {
+    setItems((prev) =>
+      (prev || []).map((i) =>
+        i.id === optItem.id ? { ...i, error: null, statusMessage: "Retrying…" } : i
+      )
+    );
+    startUploadPipeline(optItem);
   };
 
   const filteredItems = useMemo(() => {
     if (!items) return [];
     return items
       .filter((item) => {
+        // Optimistic uploads ALWAYS show at the top regardless of search/filter
+        if (item.isOptimistic) return true;
+
         const matchesCategory =
           activeCategory === "all" || item.category === activeCategory;
         const q = searchQuery.toLowerCase().trim();
@@ -64,9 +143,11 @@ export default function Closet() {
         return matchesCategory && matchesSearch;
       })
       .sort((a, b) => {
+        if (a.isOptimistic) return -1;
+        if (b.isOptimistic) return 1;
         if (sortBy === "formality") return (b.formality || 3) - (a.formality || 3);
         if (sortBy === "category") return (a.category || "").localeCompare(b.category || "");
-        return 0; // default newest (already ordered by created_date)
+        return 0; // default newest
       });
   }, [items, activeCategory, searchQuery, sortBy]);
 
@@ -157,40 +238,24 @@ export default function Closet() {
           </Button>
         </div>
       ) : (
-        <motion.div 
-          className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
-          variants={{
-            hidden: { opacity: 0 },
-            show: {
-              opacity: 1,
-              transition: { staggerChildren: 0.04 }
-            }
-          }}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "100px" }}
-        >
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 items-stretch">
           {filteredItems.map((item) => (
-            <motion.div 
-              key={item.id}
-              variants={{
-                hidden: { opacity: 0, y: 16 },
-                show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
-              }}
-            >
+            <div key={item.id}>
               <ClosetItemCard
                 item={item}
                 onDelete={handleDelete}
                 onEdit={setEditingItem}
+                onRetry={handleRetry}
               />
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       )}
 
       <UploadItemDialog
         open={uploadOpen}
         onOpenChange={setUploadOpen}
+        onFileSelected={handleFileSelected}
         onSaved={load}
       />
 
