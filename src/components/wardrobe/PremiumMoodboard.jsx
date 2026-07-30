@@ -76,12 +76,6 @@ export default function PremiumMoodboard({ items, className }) {
         );
       })}
 
-      {/* Minimal label */}
-      <div className="pointer-events-none absolute bottom-2 inset-x-0 flex justify-center">
-        <span className="text-[8px] font-semibold uppercase tracking-[0.22em] text-foreground/20">
-          Flat lay
-        </span>
-      </div>
     </div>
   );
 }

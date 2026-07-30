@@ -5,37 +5,49 @@ import MannequinOutfit from "./MannequinOutfit";
 import { cn } from "@/lib/utils";
 
 /**
- * Outfit preview with two views:
- * - Flat lay moodboard (default): editorial grid of the user's actual photos
- * - On mannequin: composites the exact uploaded items onto a mannequin silhouette
+ * Outfit preview with segmented control view switcher:
+ * - Flat lay (default): editorial grid of real item photos
+ * - On mannequin: slim fashion mannequin silhouette composition
  */
 export default function OutfitMedia({ items, isFeatured }) {
   const [mode, setMode] = useState("flat"); // "flat" | "mannequin"
 
   return (
-    <div className="space-y-2.5 p-3">
-      {/* Header bar - 100% identical height and layout across all cards */}
-      <div className="flex h-7 items-center justify-start gap-2 px-1">
-        <div className="inline-flex rounded-full border bg-muted/40 p-0.5">
-          <ViewTab
-            active={mode === "flat"}
-            onClick={() => setMode("flat")}
-            icon={LayoutGrid}
-            label="Flat lay"
-          />
-          <ViewTab
-            active={mode === "mannequin"}
-            onClick={() => setMode("mannequin")}
-            icon={UserRound}
-            label="On mannequin"
-          />
-        </div>
+    <div className="flex flex-col items-center gap-3 w-full h-full">
+      {/* Segmented Control View Switcher */}
+      <div className="flex h-9 w-full max-w-[250px] items-center rounded-full bg-muted/60 p-1 border border-border/40 shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setMode("flat")}
+          className={cn(
+            "flex-1 inline-flex items-center justify-center gap-1.5 rounded-full text-xs transition-all duration-200 h-full",
+            mode === "flat"
+              ? "bg-background text-foreground shadow-xs font-semibold"
+              : "text-muted-foreground hover:text-foreground font-medium"
+          )}
+        >
+          <LayoutGrid className="h-3.5 w-3.5" />
+          Flat lay
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("mannequin")}
+          className={cn(
+            "flex-1 inline-flex items-center justify-center gap-1.5 rounded-full text-xs transition-all duration-200 h-full",
+            mode === "mannequin"
+              ? "bg-background text-foreground shadow-xs font-semibold"
+              : "text-muted-foreground hover:text-foreground font-medium"
+          )}
+        >
+          <UserRound className="h-3.5 w-3.5" />
+          On mannequin
+        </button>
       </div>
 
-      {/* Image container with absolute corner overlay badge */}
-      <div className="relative overflow-hidden rounded-xl">
+      {/* Hero Image Stage (Centered, No Double Borders) */}
+      <div className="relative w-full max-w-[320px] h-[340px] flex items-center justify-center overflow-hidden rounded-2xl">
         {isFeatured && (
-          <span className="absolute top-2 left-2 z-20 inline-flex items-center gap-1 rounded-full bg-primary/95 px-2 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm backdrop-blur-sm pointer-events-none">
+          <span className="absolute top-2 left-2 z-20 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm backdrop-blur-sm pointer-events-none">
             <Sparkles className="h-3 w-3" /> Best Match
           </span>
         )}
@@ -46,23 +58,5 @@ export default function OutfitMedia({ items, isFeatured }) {
         )}
       </div>
     </div>
-  );
-}
-
-function ViewTab({ active, onClick, icon: Icon, label }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
-        active
-          ? "bg-background text-foreground shadow-sm"
-          : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {label}
-    </button>
   );
 }
