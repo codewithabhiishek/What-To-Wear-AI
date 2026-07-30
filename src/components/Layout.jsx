@@ -16,22 +16,26 @@ export default function Layout() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
-          <NavLink to="/" className="flex items-center gap-2.5 group">
+          <NavLink to="/" className="flex items-center gap-3 group">
             <motion.span
               whileHover={{ scale: 1.1, rotate: [0, -10, 10, -5, 0] }}
               transition={{ duration: 0.5 }}
-              className="grid h-9 w-9 place-items-center rounded-full bg-foreground text-background shadow-md transition-shadow group-hover:shadow-lg"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-foreground text-background shadow-md transition-shadow group-hover:shadow-lg"
             >
               <motion.div
                 animate={{ y: [0, -2.5, 0] }}
                 transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
               >
-                <Shirt className="h-5 w-5" />
+                <Shirt className="h-6 w-6" />
               </motion.div>
             </motion.span>
-            <span className="font-heading text-base font-bold tracking-tight">
+            <motion.span 
+              className="font-heading text-xl font-bold tracking-tight bg-gradient-to-r from-foreground via-foreground/70 to-foreground bg-[length:200%_auto] bg-clip-text text-transparent"
+              animate={{ backgroundPosition: ["0% center", "200% center"] }}
+              transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+            >
               What To Wear AI
-            </span>
+            </motion.span>
           </NavLink>
           <div className="flex items-center gap-2">
             <nav className="hidden md:flex items-center gap-1">
