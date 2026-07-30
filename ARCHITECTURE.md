@@ -266,3 +266,29 @@ users/
 ```
 
 All reads are `getDocs` (one-shot fetches on mount). There are no real-time listeners (`onSnapshot`) in the current implementation — the app re-fetches after every mutation via the `load()` callback pattern.
+
+---
+
+## 11. Recommended Free APIs for Project Enhancement
+
+To take the **What To Wear AI** project to the next level without incurring costs, consider integrating the following APIs with generous free tiers:
+
+### 11.1 Weather Integration (OpenWeatherMap or WeatherAPI)
+- **Use Case:** Automatically fetch the user's local weather based on their IP or browser geolocation, and feed the temperature/conditions into the `outfitScoring.js` engine.
+- **Enhancement:** The app can automatically boost `season: "winter"` items when it's cold, or mandate an `outerwear` item if it's raining, without the user explicitly asking.
+- **Free Tier:** OpenWeatherMap offers 1,000 API calls per day for free. WeatherAPI offers 1,000,000 calls per month for free.
+
+### 11.2 Precise Color Palette Analysis (TheColorAPI or Cloudinary)
+- **Use Case:** Instead of relying solely on NVIDIA Vision to guess a string like "navy", extract the exact HEX color codes and complimentary palettes from the garment image.
+- **Enhancement:** Can dramatically improve the **Color harmony** scoring rule by mathematically calculating complementary, analogous, or triadic color matches rather than string comparisons.
+- **Free Tier:** TheColorAPI is completely free. Cloudinary offers a generous free tier that includes automatic color extraction metadata when uploading images.
+
+### 11.3 Real-World Style Inspiration (Unsplash API)
+- **Use Case:** When an outfit is generated (e.g., "navy oversized top + beige regular bottom"), search an image API for real-life models or flat-lays wearing a similar combination.
+- **Enhancement:** Shows a "See it in the wild" moodboard next to the outfit suggestion to provide styling inspiration (how to cuff the jeans, how to tuck the shirt).
+- **Free Tier:** Unsplash API provides 50 requests per hour for free, which is plenty for personal/portfolio use.
+
+### 11.4 IP Geolocation (IP-API)
+- **Use Case:** Getting user location without an intrusive browser prompt.
+- **Enhancement:** Use it to silently fetch the user's city/country on load, which then feeds the Weather API instantly.
+- **Free Tier:** Free for non-commercial use, no API key required (rate limited to 45 requests per minute).
