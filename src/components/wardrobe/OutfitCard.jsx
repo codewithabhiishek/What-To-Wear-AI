@@ -9,7 +9,7 @@ export default function OutfitCard({
   isLogging,
   onWoreThis,
 }) {
-  const { score, items } = outfit;
+  const { score, items, breakdowns } = outfit;
 
   return (
     <article className="w-full overflow-hidden rounded-2xl border bg-card shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
@@ -53,6 +53,22 @@ export default function OutfitCard({
             </span>
           </div>
         </div>
+
+        {/* Score Breakdown UI */}
+        {breakdowns && breakdowns.length > 0 && (
+          <div className="mt-4 rounded-xl border border-border/50 bg-muted/30 p-3 space-y-2">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Score Breakdown</p>
+            {breakdowns.map((b) => (
+              <div key={b.category} className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground font-medium w-16">{b.category}</span>
+                <span className="text-muted-foreground/70 text-[10px] truncate flex-1 px-2">{b.reason}</span>
+                <span className="font-medium tabular-nums text-right w-12">
+                  +{b.points} <span className="text-muted-foreground/50 text-[10px]">/ {b.max}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="flex justify-end border-t border-border/50 pt-3">
           <Button size="sm" className="cta" onClick={onWoreThis} disabled={isLogging}>

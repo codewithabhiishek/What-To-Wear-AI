@@ -25,18 +25,17 @@ import { OCCASION_FORMALITY, NEUTRAL_COLORS } from "./wardrobeConstants";
 export const SCORING_WEIGHTS = {
   formality: 0.3, // Formality match (occasion + internal consistency)
   silhouette: 0.25, // Silhouette balance (top↔bottom fit)
-  color: 0.2, // Color harmony (max one bold color)
+  color: 0.2, // Color harmony
   recency: 0.15, // Variety / recently-worn deprioritization
   pattern: 0.1, // Pattern clash avoidance
 };
 
-export const MIN_SCORE = 60; // combos scoring below this are discarded
-export const MAX_RESULTS = 5; // how many outfits to return at most
-export const RECENT_DAYS = 7; // window for "recently worn together" penalty
-export const STALE_BOOST_DAYS = 14; // items unworn this long get a small boost
-export const RECENT_PAIR_PENALTY = 30; // per recently-worn-together pair
-export const STALE_ITEM_BOOST = 5; // per stale item
-export const STALE_BOOST_CAP = 15; // max total stale boost
+export const MIN_SCORE = 40; // Reduced to allow weak outfits to exist naturally
+export const MAX_RESULTS = 5;
+export const RECENT_DAYS = 7;
+export const STALE_BOOST_DAYS = 14;
+export const RECENT_PAIR_PENALTY = 50; // Increased heavy penalty for worn pairs
+export const STALE_ITEM_BOOST = 12.5; // per stale item
 
 // ---- Small helpers ---------------------------------------------------------
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
@@ -56,9 +55,6 @@ export function occasionFormalityRange(occasion) {
 }
 
 // ---- Recency context (built once per generate call) ------------------------
-// From the user's outfit history we derive:
-//   - recentPairs: pairs of item ids worn together within RECENT_DAYS
-//   - lastWorn:    last worn timestamp (ms) per item id
 function buildRecencyContext(history) {
   const now = Date.now();
   const recentMs = RECENT_DAYS * 86400000;
@@ -89,65 +85,90 @@ function buildRecencyContext(history) {
 }
 
 // ---- Rule 1: Formality match (30%) ----------------------------------------
-// All items should be within ~1 formality point of each other, and the combo's
-// average formality should land inside the occasion's target range.
 function formalityScore(items, targetRange) {
   const fs = items.map((i) => i.formality || 3);
   const min = Math.min(...fs);
   const max = Math.max(...fs);
   const avg = fs.reduce((a, b) => a + b, 0) / fs.length;
-
-  let score = 100;
-  // Penalize spread beyond 1 point on the formality scale.
   const spread = max - min;
-  if (spread > 1) score -= (spread - 1) * 35;
-  // Penalize drifting outside the occasion's target formality range.
-  if (avg < targetRange[0]) score -= (targetRange[0] - avg) * 25;
-  else if (avg > targetRange[1]) score -= (avg - targetRange[1]) * 25;
 
-  return clamp(score, 0, 100);
+  let score = 70; // Base score
+  let reason = "Formality matches occasion";
+
+  // Check internal consistency
+  if (spread > 1) {
+    score -= (spread - 1) * 35;
+    reason = "Formality clash between items";
+  }
+
+  // Check occasion match
+  const targetMid = (targetRange[0] + targetRange[1]) / 2;
+
+  if (avg < targetRange[0]) {
+    score -= (targetRange[0] - avg) * 35;
+    reason = "Too casual for the occasion";
+  } else if (avg > targetRange[1]) {
+    score -= (avg - targetRange[1]) * 35;
+    reason = "Too formal for the occasion";
+  } else if (Math.abs(avg - targetMid) <= 0.5 && spread <= 1) {
+    score += 30; // Perfect match
+    reason = "Perfect formality match";
+  }
+
+  return { score: clamp(score, 0, 100), reason };
 }
 
 // ---- Rule 2: Silhouette balance (25%) --------------------------------------
-// Oversized top pairs best with fitted/regular bottom (and vice versa). Two
-// oversized or two fitted pieces together score lower.
 function silhouetteScore(items) {
   const top = items.find((i) => i.category === "top");
   const bottom = items.find((i) => i.category === "bottom");
-  if (!top || !bottom) return 80;
+  if (!top || !bottom) return { score: 75, reason: "Standard fit" };
 
   const tf = top.fit;
   const bf = bottom.fit;
 
-  if ((tf === "oversized" && bf === "fitted") || (tf === "fitted" && bf === "oversized"))
-    return 100;
-  if (
-    (tf === "oversized" && bf === "regular") ||
-    (tf === "regular" && bf === "oversized") ||
-    (tf === "fitted" && bf === "regular") ||
-    (tf === "regular" && bf === "fitted")
-  )
-    return 85;
-  if (tf === "oversized" && bf === "oversized") return 45;
-  if (tf === "fitted" && bf === "fitted") return 65;
-  return 80; // regular + regular
+  if ((tf === "oversized" && bf === "fitted") || (tf === "fitted" && bf === "oversized")) {
+    return { score: 100, reason: "Great silhouette balance" };
+  }
+
+  if ((tf === "oversized" && bf === "regular") || (tf === "regular" && bf === "oversized") ||
+      (tf === "fitted" && bf === "regular") || (tf === "regular" && bf === "fitted")) {
+    return { score: 85, reason: "Good proportions" };
+  }
+
+  if (tf === "oversized" && bf === "oversized") {
+    return { score: 40, reason: "Too baggy (both oversized)" };
+  }
+
+  if (tf === "fitted" && bf === "fitted") {
+    return { score: 50, reason: "Too tight (both fitted)" };
+  }
+
+  return { score: 75, reason: "Standard regular fit" };
 }
 
 // ---- Rule 3: Color harmony (20%) -------------------------------------------
-// No more than one bold/saturated color per outfit; neutrals pair with anything.
 function colorScore(items) {
   const bold = items.filter((i) => !isNeutralColor(i.color_primary));
-  if (bold.length <= 1) return 100;
-  if (bold.length === 2) return 50; // two competing bold colors
-  return 25;
+
+  if (bold.length === 0) {
+    return { score: 90, reason: "Clean neutral palette" };
+  }
+  if (bold.length === 1) {
+    return { score: 100, reason: "Balanced color pop" };
+  }
+  if (bold.length === 2) {
+    return { score: 50, reason: "Clashing bold colors" };
+  }
+
+  return { score: 20, reason: "Too many loud colors" };
 }
 
 // ---- Rule 4: Variety / recently worn (15%) ---------------------------------
-// Deprioritize combos whose item pairs were worn together in the last 7 days;
-// give a small boost to items unworn for 14+ days.
 function recencyScore(items, ctx) {
   const ids = items.map((i) => i.id);
-  let score = 100;
+  let score = 75; // Base score
+  let reasons = [];
 
   let recentPairHits = 0;
   for (let i = 0; i < ids.length; i++) {
@@ -155,26 +176,40 @@ function recencyScore(items, ctx) {
       if (ctx.recentPairs.has([ids[i], ids[j]].sort().join("|"))) recentPairHits++;
     }
   }
-  score -= recentPairHits * RECENT_PAIR_PENALTY;
+
+  if (recentPairHits > 0) {
+    score -= recentPairHits * RECENT_PAIR_PENALTY;
+    reasons.push("Worn together recently");
+  }
 
   let staleCount = 0;
   for (const id of ids) {
     const lw = ctx.lastWorn[id];
     if (lw === undefined || ctx.now - lw >= ctx.staleMs) staleCount++;
   }
-  score += Math.min(staleCount * STALE_ITEM_BOOST, STALE_BOOST_CAP);
 
-  return clamp(score, 0, 100);
+  if (staleCount > 0 && recentPairHits === 0) {
+    score += Math.min(staleCount * STALE_ITEM_BOOST, 25);
+    reasons.push("Includes unworn pieces");
+  }
+
+  if (reasons.length === 0) reasons.push("Good rotation");
+
+  return { score: clamp(score, 0, 100), reason: reasons.join(" & ") };
 }
 
 // ---- Rule 5: Pattern clash (10%) -------------------------------------------
-// No more than one patterned item per outfit (scale compatibility isn't
-// modeled in the MVP, so any second patterned piece is treated as a clash).
 function patternScore(items) {
   const patterned = items.filter((i) => i.pattern && i.pattern !== "solid");
-  if (patterned.length <= 1) return 100;
-  if (patterned.length === 2) return 50;
-  return 20;
+
+  if (patterned.length === 0) {
+    return { score: 85, reason: "Clean solid patterns" };
+  }
+  if (patterned.length === 1) {
+    return { score: 100, reason: "Good pattern balance" };
+  }
+
+  return { score: 30, reason: "Clashing patterns" };
 }
 
 // ---- Blend + combo generation ----------------------------------------------
@@ -186,17 +221,23 @@ function scoreCombo(items, targetRange, ctx) {
   const p = patternScore(items);
 
   const score = Math.round(
-    f * SCORING_WEIGHTS.formality +
-      s * SCORING_WEIGHTS.silhouette +
-      c * SCORING_WEIGHTS.color +
-      r * SCORING_WEIGHTS.recency +
-      p * SCORING_WEIGHTS.pattern
+    f.score * SCORING_WEIGHTS.formality +
+    s.score * SCORING_WEIGHTS.silhouette +
+    c.score * SCORING_WEIGHTS.color +
+    r.score * SCORING_WEIGHTS.recency +
+    p.score * SCORING_WEIGHTS.pattern
   );
 
   return {
     items,
     score,
-    breakdown: { formality: f, silhouette: s, color: c, recency: r, pattern: p },
+    breakdowns: [
+      { category: "Formality", points: Math.round(f.score * SCORING_WEIGHTS.formality), max: Math.round(SCORING_WEIGHTS.formality * 100), raw: f.score, reason: f.reason },
+      { category: "Silhouette", points: Math.round(s.score * SCORING_WEIGHTS.silhouette), max: Math.round(SCORING_WEIGHTS.silhouette * 100), raw: s.score, reason: s.reason },
+      { category: "Color", points: Math.round(c.score * SCORING_WEIGHTS.color), max: Math.round(SCORING_WEIGHTS.color * 100), raw: c.score, reason: c.reason },
+      { category: "Variety", points: Math.round(r.score * SCORING_WEIGHTS.recency), max: Math.round(SCORING_WEIGHTS.recency * 100), raw: r.score, reason: r.reason },
+      { category: "Pattern", points: Math.round(p.score * SCORING_WEIGHTS.pattern), max: Math.round(SCORING_WEIGHTS.pattern * 100), raw: p.score, reason: p.reason },
+    ],
   };
 }
 
@@ -206,7 +247,7 @@ function scoreCombo(items, targetRange, ctx) {
  * @param {Array} items     - the user's ClothingItem records
  * @param {string} occasion - a preset key or free-text occasion
  * @param {Array} history   - the user's OutfitHistory records (for recency)
- * @returns {Array<{items, score, breakdown}>} ranked outfits above MIN_SCORE
+ * @returns {Array<{items, score, breakdowns}>} ranked outfits above MIN_SCORE
  */
 export function generateOutfits(items, occasion, history) {
   const tops = items.filter((i) => i.category === "top");
