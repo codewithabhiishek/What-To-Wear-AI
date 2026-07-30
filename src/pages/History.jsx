@@ -2,10 +2,31 @@ import { useState, useEffect, useCallback } from "react";
 import { db } from "@/api/firebaseClient";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";
-import { Clock, Loader2 } from "lucide-react";
+import { Clock } from "lucide-react";
 import OutfitThumbnails from "@/components/wardrobe/OutfitThumbnails";
 import EmptyState from "@/components/wardrobe/EmptyState";
 import { format } from "date-fns";
+
+function HistorySkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="rounded-2xl border bg-card p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="skeleton h-6 w-20 rounded-full" />
+            <div className="skeleton h-4 w-32 rounded-full" />
+          </div>
+          <div className="flex gap-2">
+            <div className="skeleton h-16 w-16 rounded-xl" />
+            <div className="skeleton h-16 w-16 rounded-xl" />
+            <div className="skeleton h-16 w-16 rounded-xl" />
+          </div>
+          <div className="mt-3 skeleton h-3 w-3/4 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function History() {
   const { user } = useAuth();
@@ -47,9 +68,7 @@ export default function History() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <HistorySkeleton />
       ) : entries.length === 0 ? (
         <EmptyState
           icon={Clock}
@@ -65,7 +84,7 @@ export default function History() {
             return (
               <div
                 key={entry.id}
-                className="rounded-2xl border bg-card p-4 shadow-sm"
+                className="rounded-2xl border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
               >
                 <div className="mb-3 flex items-center justify-between">
                   <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium capitalize text-foreground">

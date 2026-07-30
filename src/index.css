@@ -92,18 +92,19 @@
 }
 
 @layer components {
-  /* Tactile feedback for every interactive control (buttons + .tactile links) */
-  button,
+  /* Tactile feedback for every interactive control (buttons + .tactile links)
+     Exclude nav buttons (they are tiny and the scale causes visual jitter) */
+  button:not(nav button),
   .tactile {
     transition: transform 0.18s ease-out, background-color 0.18s ease-out,
       border-color 0.18s ease-out, color 0.18s ease-out, box-shadow 0.18s ease-out,
       opacity 0.18s ease-out !important;
   }
-  button:not(:disabled):hover,
+  button:not(nav button):not(:disabled):hover,
   .tactile:hover {
     transform: scale(1.03);
   }
-  button:not(:disabled):active,
+  button:not(nav button):not(:disabled):active,
   .tactile:active {
     transform: scale(0.97);
   }
@@ -117,6 +118,15 @@
   /* Small pill text breathes a little */
   .pill {
     letter-spacing: 0.02em;
+  }
+
+  /* Hide scrollbar cross-browser (used for horizontally scrollable pill rows) */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }
 

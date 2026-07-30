@@ -145,20 +145,15 @@ export default function WhatToWear() {
           />
 
           <Button
-            className="cta"
+            className="cta w-full sm:w-auto"
             onClick={handleGenerate}
             disabled={generating || !hasTopsAndBottoms}
             size="lg"
           >
             {generating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Building
-                outfits…
-              </>
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Building outfits…</>
             ) : (
-              <>
-                <Wand2 className="mr-2 h-4 w-4" /> Generate outfits
-              </>
+              <><Wand2 className="mr-2 h-4 w-4" />Generate outfits</>
             )}
           </Button>
 
@@ -179,7 +174,7 @@ export default function WhatToWear() {
           )}
 
           {!generating && outfits && outfits.length > 0 && (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {outfits.map((outfit, idx) => {
                 const key = outfit.items.map((i) => i.id).join(",") + idx;
                 return (

@@ -10,17 +10,21 @@ export default function OccasionSelector({
 }) {
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
+      {/* Scrollable pill row — no wrapping on small screens */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]">
         {OCCASIONS.map((o) => (
           <button
             key={o.key}
             type="button"
-            onClick={() => onChange(o.key)}
+            onClick={() => {
+              onChange(o.key);
+              onFreeTextChange(""); // clear free-text when a preset is picked
+            }}
             className={cn(
-              "rounded-full border px-4 py-2 text-sm transition-colors",
-              value === o.key
+              "shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+              value === o.key && !freeText
                 ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground",
+                : "border-border text-muted-foreground hover:border-foreground/50 hover:text-foreground",
             )}
           >
             {o.label}
