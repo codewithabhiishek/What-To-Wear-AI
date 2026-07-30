@@ -6,7 +6,7 @@ export default function PremiumMoodboard({ items, className }) {
   const sortedItems = [...items].sort((a, b) => (order[a.category] || 99) - (order[b.category] || 99));
 
   return (
-    <div className={cn("relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-white shadow-inner", className)}>
+    <div className={cn("relative aspect-[4/5] w-full max-w-sm mx-auto overflow-hidden rounded-xl bg-white shadow-inner", className)}>
       {sortedItems.map((item, i) => {
         let style = {};
         // Remove random rotation, keep it perfectly straight and clean
@@ -14,19 +14,19 @@ export default function PremiumMoodboard({ items, className }) {
         
         switch (item.category) {
           case "top":
-            style = { top: "5%", left: "50%", transform: "translateX(-50%)", width: "65%", height: "45%", zIndex: 10 };
+            style = { top: "10%", left: "50%", transform: "translateX(-50%)", width: "55%", height: "40%", zIndex: 10 };
             break;
           case "outerwear":
-            style = { top: "2%", left: "50%", transform: "translateX(-50%)", width: "75%", height: "55%", zIndex: 5 };
+            style = { top: "5%", left: "50%", transform: "translateX(-50%)", width: "65%", height: "50%", zIndex: 5 };
             break;
           case "bottom":
-            style = { top: "45%", left: "50%", transform: "translateX(-50%)", width: "55%", height: "45%", zIndex: 20 };
+            style = { top: "45%", left: "50%", transform: "translateX(-50%)", width: "45%", height: "40%", zIndex: 20 };
             break;
           case "shoes":
-            style = { bottom: "2%", left: "50%", transform: "translateX(-50%)", width: "40%", height: "20%", zIndex: 30 };
+            style = { bottom: "5%", left: "50%", transform: "translateX(-50%)", width: "35%", height: "15%", zIndex: 30 };
             break;
           case "accessory":
-            style = { top: "5%", right: "15%", width: "25%", height: "25%", zIndex: 40 };
+            style = { top: "10%", right: "15%", width: "20%", height: "20%", zIndex: 40 };
             break;
           default:
             style = { top: "30%", left: "50%", transform: "translateX(-50%)", width: "40%", height: "40%", zIndex: 15 };
