@@ -6,9 +6,7 @@ export default function PremiumMoodboard({ items, className }) {
   const sortedItems = [...items].sort((a, b) => (order[a.category] || 99) - (order[b.category] || 99));
 
   return (
-    <div className={cn("relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-gradient-to-br from-stone-50 to-stone-200 shadow-inner", className)}>
-      <div className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
-      
+    <div className={cn("relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-white shadow-inner", className)}>
       {sortedItems.map((item, i) => {
         let style = {};
         let itemClass = "absolute object-contain drop-shadow-xl transition-transform hover:scale-105 duration-300";

@@ -63,12 +63,15 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
       setPhase(PHASE.PROCESSING_BG);
       const { removeBackground } = await import("@imgly/background-removal");
       
-      // We pass the raw File object. removeBackground works with Blob/File/URL.
-      const transparentBlob = await removeBackground(file);
+      // Explicitly use the 'small' model for maximum speed
+      const transparentBlob = await removeBackground(file, {
+        model: "small",
+        output: { format: "image/webp", quality: 0.8 },
+      });
       
       // Convert Blob to File to pass to Vercel Blob
-      // .png extension because removeBackground outputs PNG for transparency
-      const cleanFile = new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: "image/png" });
+      // .webp extension because we used webp for speed
+      const cleanFile = new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + ".webp", { type: "image/webp" });
 
       // 2. Upload the processed photo to Vercel Blob via our serverless function
       setPhase(PHASE.UPLOADING);
@@ -156,8 +159,8 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
             {phase === PHASE.PROCESSING_BG || phase === PHASE.UPLOADING ? (
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {phase === PHASE.PROCESSING_BG ? "Removing background (this might take a moment)..." : "Uploading clean photo..."}
+                <span className="text-sm text-muted-foreground text-center px-4">
+                  {phase === PHASE.PROCESSING_BG ? "Removing background...\n(This downloads a small AI model the very first time you use it, but will be instant afterwards!)" : "Uploading clean photo..."}
                 </span>
               </div>
             ) : (
