@@ -10,21 +10,22 @@ This document explains the technical architecture, data flow, and outfit scoring
 - **File Storage**: Vercel Blob (for storing user-uploaded clothing photos)
 - **AI Engine**: Hybrid Approach
   - **NVIDIA NIM** (`meta/llama-3.2-90b-vision-instruct`): Used for image analysis and automatic clothing tagging because of its superior open-source vision capabilities.
-  - **Groq SDK** (`llama-3.3-70b-versatile`): Used for generating natural language explanations of why an outfit works.
+  - **NVIDIA NIM** (`meta/llama-3.3-70b-instruct`): Used for generating natural language explanations of why an outfit works.
 
 ## 2. Data Flow & Storage Lifecycle
 How a clothing item is processed and saved by the user:
 
-1. **Photo Upload**: The user uploads an image via `UploadItemDialog.jsx`. The file is sent directly to `/api/upload-photo` which stores it in **Vercel Blob** and returns a public URL.
-2. **AI Tagging**: The image URL is passed to `/api/tag-clothing-item`. The Groq Vision model analyzes the image and returns a strict JSON object mapping 6 specific attributes:
+1. **Photo Capture & Background Removal**: The user captures or uploads an image via `UploadItemDialog.jsx`. The app uses `@imgly/background-removal` to automatically process the image entirely in the browser, leaving a clean cut-out of the clothing item with a transparent background.
+2. **File Storage**: The transparent image is sent directly to `/api/upload-photo` which stores it in **Vercel Blob** and returns a public URL.
+3. **AI Tagging**: The image URL is passed to `/api/tag-clothing-item`. The NVIDIA Vision model analyzes the image and returns a strict JSON object mapping 6 specific attributes:
    - `category` (top, bottom, shoes, outerwear, accessory)
    - `color_primary` and `color_secondary`
    - `pattern` (solid, striped, printed, etc.)
    - `fit` (fitted, regular, oversized)
    - `formality` (scale of 1-5)
    - `season` (summer, winter, all-season)
-3. **User Review**: The user is presented with the AI's tags in the UI. They can manually adjust any incorrect tags before saving.
-4. **Database Storage**: Upon confirmation, the item data (and image URL) is saved to **Firebase Firestore** under the path: `users/{userId}/clothingItems`.
+4. **User Review**: The user is presented with the AI's tags in the UI. They can manually adjust any incorrect tags before saving.
+5. **Database Storage**: Upon confirmation, the item data (and image URL) is saved to **Firebase Firestore** under the path: `users/{userId}/clothingItems`.
 
 ## 3. Outfit Scoring Engine
 The outfit recommendation logic lives in `src/lib/outfitScoring.js`. It runs entirely on the client side (for zero-latency generation) before fetching AI explanations.
@@ -60,7 +61,7 @@ Combinations scoring below `60/100` (`MIN_SCORE`) are discarded. The top 5 highe
 ## 4. AI Outfit Explanations
 For the top 5 outfits, the app sends a lightweight text prompt to `/api/generate-outfit-explanation` containing the item descriptions (color, fit, pattern, formality) and the requested occasion. 
 
-Groq (Llama 3.3) responds with a concise, one-sentence natural explanation of *why* the outfit works. Example: *"The oversized green top pairs perfectly with the fitted black jeans for a balanced, casual silhouette."*
+NVIDIA (Llama 3.3) responds with a concise, one-sentence natural explanation of *why* the outfit works. Example: *"The oversized green top pairs perfectly with the fitted black jeans for a balanced, casual silhouette."*
 
 ## 5. History Logging
 When a user clicks **"I wore this!"** on an outfit card:
