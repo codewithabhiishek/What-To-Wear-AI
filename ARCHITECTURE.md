@@ -16,7 +16,8 @@ This document is the single source of truth for the technical design, data flow,
 | File storage | Vercel Blob |
 | Serverless API | Vercel Serverless Functions (`/api/*`) |
 | AI — Vision tagging | NVIDIA NIM · `meta/llama-3.2-90b-vision-instruct` |
-| AI — Text explanations | NVIDIA NIM · `meta/llama-3.1-8b-instruct` |
+| AI — Text explanations | NVIDIA / DeepSeek · `deepseek-ai/deepseek-v4-flash` |
+| AI — Outfit visualization | NVIDIA / Qwen · `Qwen Image` model |
 | Image Pre-Processing | `heic2any` (iPhone HEIC/HEIF conversion), Canvas EXIF orientation & 1400px downscaling |
 | Background removal | `@imgly/background-removal` (runs fully in the browser, WASM) |
 
@@ -37,8 +38,10 @@ what-to-wear-ai/
 │   │   └── firebaseClient.js     # Firebase app init; exports `auth` and `db`
 │   ├── lib/
 │   │   ├── AuthContext.jsx       # Auth state (onAuthStateChanged), logout helper
+│   │   ├── FavoritesContext.jsx  # Global optimistic favorites state + Firestore persistence
 │   │   ├── ThemeProvider.jsx     # Light / dark / system theme via localStorage
 │   │   ├── outfitScoring.js      # Client-side outfit combination & additive/subtractive scoring engine
+│   │   ├── uploadPipeline.js     # Decoupled background upload engine with live progress callbacks
 │   │   ├── imageUtils.js         # HEIC conversion, EXIF orientation, downscaling & timing logs
 │   │   ├── visualizeOutfit.js    # Outfit image prompt builder + localStorage cache
 │   │   ├── wardrobeConstants.js  # Occasions with icons, category/pattern/fit/season/formality enums
@@ -47,8 +50,9 @@ what-to-wear-ai/
 │   │   ├── utils.js              # `cn()` (clsx + tailwind-merge)
 │   │   └── PageNotFound.jsx      # 404 fallback page
 │   ├── pages/
-│   │   ├── Closet.jsx            # Browse, search, category filter, sort, upload, edit, delete items
+│   │   ├── Closet.jsx            # Browse, search, category filter, sort, 0ms optimistic upload
 │   │   ├── WhatToWear.jsx        # Generate & display ranked outfit suggestions with loading checklist
+│   │   ├── Favorites.jsx         # Saved favorite outfits gallery with occasion & score filters
 │   │   ├── History.jsx           # View previously logged outfits
 │   │   ├── Settings.jsx          # Update display name, sign out
 │   │   ├── Login.jsx             # Email/password + Google sign-in
@@ -56,7 +60,7 @@ what-to-wear-ai/
 │   │   ├── ForgotPassword.jsx    # Send Firebase password reset email
 │   │   └── ResetPassword.jsx     # Confirm password reset via oobCode
 │   ├── components/
-│   │   ├── Layout.jsx            # App shell: top nav, bottom mobile nav, page transitions
+│   │   ├── Layout.jsx            # App shell: top nav, bottom mobile nav (Closet, What to Wear, Favorites, History)
 │   │   ├── ProtectedRoute.jsx    # Redirects unauthenticated users to /login
 │   │   ├── AuthLayout.jsx        # Shared card wrapper for auth pages
 │   │   ├── ModeToggle.jsx        # Light/dark toggle button
@@ -65,13 +69,13 @@ what-to-wear-ai/
 │   │   ├── UserNotRegisteredError.jsx
 │   │   ├── ui/                   # shadcn/ui primitives (generated, do not hand-edit)
 │   │   └── wardrobe/
-│   │       ├── ClosetItemCard.jsx    # Single clothing item tile (edit/delete)
+│   │       ├── ClosetItemCard.jsx    # Single clothing item tile (fixed aspect-[3/4] ratio, onLoad fade-in)
 │   │       ├── UploadItemDialog.jsx  # Multi-stage upload → pre-resize → bg removal → tag → save
 │   │       ├── EditItemDialog.jsx    # Fix AI tags on an existing item
 │   │       ├── TagEditor.jsx         # Inline form for all 7 clothing attributes
 │   │       ├── OccasionSelector.jsx  # Chip picker with emoji icons + free-text for occasion
-│   │       ├── OutfitCard.jsx        # Pixel-perfect standardized outfit card with match badge
-│   │       ├── OutfitDetailDialog.jsx# Click-to-expand modal for high-res preview & full breakdown
+│   │       ├── OutfitCard.jsx        # Standardized outfit card with Heart favorite toggle & match badge
+│   │       ├── OutfitDetailDialog.jsx# Compact 2-column modal (100% viewport fit, zero scrolling)
 │   │       ├── OutfitMedia.jsx       # Tab switcher: flat-lay moodboard vs. on-mannequin
 │   │       ├── PremiumMoodboard.jsx  # Editorial 4/5 flat-lay grid using real item photos with hover scaling
 │   │       ├── MannequinOutfit.jsx   # Minimalist fashion SVG mannequin silhouette (4/5 ratio)
@@ -94,8 +98,10 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_APP_ID=
 
-# NVIDIA NIM — vision tagging + text explanations (server-side only)
-NVIDIA_API_KEY=
+# AI Keys (server-side only)
+NVIDIA_API_KEY=          # Llama 3.2 90B Vision tagging
+DEEPSEEK_API_KEY=        # DeepSeek V4 Flash outfit explanations
+QWEN_IMAGE_API_KEY=      # Qwen Image model outfit visualizations
 
 # Vercel Blob — auto-provided when you link a Blob store in the Vercel dashboard
 BLOB_READ_WRITE_TOKEN=
