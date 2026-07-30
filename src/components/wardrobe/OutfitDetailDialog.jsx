@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Check, Loader2, Heart } from "lucide-react";
+import { Sparkles, Check, Loader2, Heart, X } from "lucide-react";
 import OutfitMedia from "./OutfitMedia";
 import { CATEGORY_LABELS } from "@/lib/wardrobeConstants";
 import { useFavorites } from "@/lib/FavoritesContext";
@@ -27,79 +27,79 @@ export default function OutfitDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto sm:overflow-hidden rounded-[2rem] p-5 sm:p-6">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto sm:overflow-hidden rounded-[1.75rem] border border-border/80 bg-background/95 backdrop-blur-xl shadow-2xl p-5 sm:p-6 transition-all duration-200 ease-out">
         <DialogHeader className="sr-only">
           <DialogTitle>Outfit Details</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-[230px_1fr] gap-5 items-start">
+        {/* TOP BAR: Match percentage badge, Best match badge & Favorite toggle */}
+        <div className="flex items-center justify-between border-b pb-3.5 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              {score}% Match
+            </span>
+            {isFeatured && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
+                Best Match
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              toggleFavorite(
+                outfit,
+                explanation || outfit.explanation,
+                outfit.occasion || "casual"
+              )
+            }
+            className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-xs transition-all duration-150 hover:scale-105 active:scale-95 hover:bg-muted"
+          >
+            <Heart
+              className={cn(
+                "h-3.5 w-3.5 transition-colors",
+                isFav ? "fill-red-500 text-red-500" : "text-muted-foreground"
+              )}
+            />
+            <span>{isFav ? "Saved" : "Favorite"}</span>
+          </button>
+        </div>
+
+        {/* MIDDLE: 40% / 60% Rebalanced Two-Column Layout */}
+        <div className="grid grid-cols-1 sm:grid-cols-[40%_1fr] gap-6 items-center">
           
-          {/* LEFT COLUMN: Scaled-down Outfit Preview (Reduced ~35%) */}
-          <div className="w-full max-w-[230px] mx-auto overflow-hidden rounded-xl border bg-muted/20 shrink-0">
+          {/* LEFT COLUMN (40%): Scaled-down Outfit Preview */}
+          <div className="w-full max-w-[270px] mx-auto overflow-hidden rounded-2xl border bg-muted/20 p-1 shrink-0 flex items-center justify-center">
             <OutfitMedia items={items} isFeatured={false} />
           </div>
 
-          {/* RIGHT COLUMN: Badges, Rationale, Pieces & Action Buttons */}
+          {/* RIGHT COLUMN (60%): Short AI Explanation & Compact Item Chips */}
           <div className="flex flex-col justify-between space-y-4 h-full min-w-0">
             
-            {/* Header Toolbar: Match score, Best match badge, Heart favorite */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  {score}% Match
-                </span>
-                {isFeatured && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground">
-                    Best Match
-                  </span>
-                )}
-              </div>
-
-              {/* Heart Favorite Button */}
-              <button
-                type="button"
-                onClick={() =>
-                  toggleFavorite(
-                    outfit,
-                    explanation || outfit.explanation,
-                    outfit.occasion || "casual"
-                  )
-                }
-                className="inline-flex items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm transition-all hover:scale-105 active:scale-95 hover:bg-muted"
-              >
-                <Heart
-                  className={cn(
-                    "h-3.5 w-3.5 transition-colors",
-                    isFav ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                  )}
-                />
-                <span>{isFav ? "Saved" : "Favorite"}</span>
-              </button>
-            </div>
-
-            {/* Explanation Section */}
+            {/* Short AI Explanation (Max 2-3 lines) */}
             <div className="space-y-1">
-              <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Why this works
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Style Vibe
               </h4>
-              <p className="text-xs sm:text-sm leading-relaxed text-foreground/90 font-medium">
-                {explanation || outfit.explanation || "A balanced combination from your closet."}
+              <p className="text-xs sm:text-sm text-foreground/90 font-medium leading-relaxed line-clamp-3">
+                {explanation || outfit.explanation || "Clean everyday outfit with balanced casual styling."}
               </p>
             </div>
 
-            {/* Compact Pieces List */}
+            {/* Clothing Pieces as Compact Chips */}
             <div className="space-y-1.5">
-              <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Pieces ({items.length})
               </h4>
-              <div className="grid grid-cols-1 gap-1.5 max-h-40 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto pr-1">
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-2.5 rounded-lg border bg-card p-1.5 text-xs shadow-xs"
+                    className="flex items-center gap-3 rounded-xl border bg-card/70 p-2 text-xs hover:border-primary/20 transition-colors"
                   >
-                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded bg-muted">
+                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-muted border p-0.5">
                       <img
                         src={item.image_url}
                         alt={item.color_primary}
@@ -110,7 +110,7 @@ export default function OutfitDetailDialog({
                       <p className="font-semibold text-foreground truncate text-xs">
                         {CATEGORY_LABELS[item.category] || item.category}
                       </p>
-                      <p className="text-muted-foreground capitalize truncate text-[10px]">
+                      <p className="text-muted-foreground capitalize truncate text-[11px]">
                         {item.color_primary} · {item.fit} · {item.pattern}
                       </p>
                     </div>
@@ -119,11 +119,19 @@ export default function OutfitDetailDialog({
               </div>
             </div>
 
-            {/* Bottom Actions Bar */}
-            <div className="pt-2 border-t flex items-center justify-end gap-2">
+            {/* BOTTOM ACTIONS BAR: Secondary "Close" + Primary "I Wore This" */}
+            <div className="pt-3 border-t flex items-center justify-end gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-4 text-xs font-medium"
+                onClick={() => onOpenChange(false)}
+              >
+                Close
+              </Button>
               <Button
                 size="sm"
-                className="w-full sm:w-auto shadow-sm text-xs h-9 px-4 font-semibold"
+                className="h-9 px-4 text-xs font-semibold shadow-sm"
                 onClick={() => {
                   onWoreThis();
                   onOpenChange(false);
