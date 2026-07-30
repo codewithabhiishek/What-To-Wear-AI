@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
     const isDeepSeekKey = process.env.DEEPSEEK_API_KEY && !process.env.DEEPSEEK_API_KEY.startsWith("nvapi-");
     const baseURL = process.env.DEEPSEEK_BASE_URL || (isDeepSeekKey ? "https://api.deepseek.com" : "https://integrate.api.nvidia.com/v1");
-    const model = process.env.DEEPSEEK_MODEL || (isDeepSeekKey ? "deepseek-chat" : "deepseek-ai/deepseek-r1");
+    const model = process.env.DEEPSEEK_MODEL || (isDeepSeekKey ? "deepseek-chat" : "deepseek-ai/deepseek-v4-flash");
 
     const openai = new OpenAI({ 
       baseURL, 
