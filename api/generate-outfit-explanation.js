@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,23 +14,26 @@ export default async function handler(req, res) {
 
     const fallbackExplanation = "A well-balanced combination matching the formality level and color tones for this occasion.";
 
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "your-gemini-key") {
+    if (!process.env.GROQ_API_KEY) {
       return res.status(200).json({ explanation: fallbackExplanation });
     }
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt
+      const chatCompletion = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7,
       });
 
-      const text = response.text;
+      const text = chatCompletion.choices[0]?.message?.content || fallbackExplanation;
       
       return res.status(200).json({ explanation: text });
     } catch (innerError) {
-      console.error('Gemini explanation call failed, using fallback:', innerError);
+      console.error('Groq explanation call failed, using fallback:', innerError);
       return res.status(200).json({ explanation: fallbackExplanation });
     }
   } catch (error) {
