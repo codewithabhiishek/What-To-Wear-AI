@@ -16,6 +16,12 @@ import Layout from "@/components/Layout";
 import Closet from "@/pages/Closet";
 import WhatToWear from "@/pages/WhatToWear";
 import Favorites from "@/pages/Favorites";
+import History from "@/pages/History";
+import Settings from "@/pages/Settings";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
 
 const AuthenticatedApp = () => {
