@@ -8,7 +8,7 @@
 // caching is needed.
 // =============================================================================
 
-const CACHE_PREFIX = "wardrobe_viz_";
+const CACHE_PREFIX = "wardrobe_viz_v2_";
 
 export function buildComboKey(items, occasion) {
   const ids = items.map((i) => i.id).sort().join(",");
