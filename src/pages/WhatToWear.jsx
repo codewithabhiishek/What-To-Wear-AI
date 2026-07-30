@@ -178,7 +178,7 @@ export default function WhatToWear() {
 
           {!generating && outfits && outfits.length > 0 && (
             <motion.div 
-              className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
+              className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch"
               variants={{
                 hidden: { opacity: 0 },
                 show: {
@@ -195,7 +195,6 @@ export default function WhatToWear() {
                 return (
                   <motion.div
                     key={key}
-                    className={idx === 0 ? "sm:col-span-2 xl:col-span-3" : ""}
                     variants={{
                       hidden: { opacity: 0, y: 16 },
                       show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }

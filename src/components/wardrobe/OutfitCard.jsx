@@ -15,12 +15,11 @@ export default function OutfitCard({
   return (
     <article
       className={cn(
-        "group flex flex-col overflow-hidden rounded-[2rem] border bg-card shadow-lg transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl hover:border-primary/30 cursor-pointer [&_img]:transition-all [&_img]:duration-500 [&_img]:ease-out hover:[&_img]:scale-[1.04] hover:[&_img]:brightness-105",
-        isFeatured && "ring-1 ring-primary/20 border-primary/40 sm:flex-row"
+        "group flex h-full flex-col overflow-hidden rounded-[2rem] border bg-card shadow-lg transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl hover:border-primary/30 cursor-pointer [&_img]:transition-all [&_img]:duration-500 [&_img]:ease-out hover:[&_img]:scale-[1.04] hover:[&_img]:brightness-105"
       )}
     >
       {/* Media Section */}
-      <div className={cn("relative", isFeatured ? "sm:w-1/2 sm:border-r" : "w-full border-b")}>
+      <div className="relative w-full border-b">
         {isFeatured && (
           <div className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-md backdrop-blur-md">
             <Sparkles className="h-3.5 w-3.5" /> Best Match
@@ -30,7 +29,7 @@ export default function OutfitCard({
       </div>
 
       {/* Content Section */}
-      <div className={cn("flex flex-1 flex-col p-6 sm:p-8", isFeatured ? "justify-center" : "")}>
+      <div className="flex flex-1 flex-col p-6 sm:p-8">
         
         {/* Score Header */}
         <div className="mb-3">
@@ -41,7 +40,7 @@ export default function OutfitCard({
         </div>
 
         {/* Explanation */}
-        <p className="mb-8 text-base leading-relaxed text-foreground/90">
+        <p className="mb-8 text-base leading-relaxed text-foreground/90 line-clamp-2">
           {explanation ? (
             explanation
           ) : (
@@ -54,7 +53,6 @@ export default function OutfitCard({
         {/* Action Button */}
         <div className="mt-auto flex justify-end">
           <Button 
-            size={isFeatured ? "lg" : "default"} 
             className="w-full sm:w-auto shadow-sm" 
             onClick={onWoreThis} 
             disabled={isLogging}
