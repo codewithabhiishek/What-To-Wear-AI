@@ -36,7 +36,8 @@ export default async function handler(req, res) {
       const imageResp = await fetch(imageUrl);
       const arrayBuffer = await imageResp.arrayBuffer();
       const base64Data = Buffer.from(arrayBuffer).toString('base64');
-      const mimeType = imageResp.headers.get('content-type') || 'image/jpeg';
+      const rawMime = imageResp.headers.get('content-type') || 'image/jpeg';
+      const mimeType = rawMime.split(';')[0].trim();
 
       const TAGGING_SCHEMA = {
         type: "object",
