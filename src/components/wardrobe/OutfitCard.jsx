@@ -1,17 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import OutfitMedia from "./OutfitMedia";
-import { CATEGORY_LABELS } from "@/lib/wardrobeConstants";
 import { cn } from "@/lib/utils";
-
-function getScoreLabel(score) {
-  if (score >= 95) return "Perfect";
-  if (score >= 88) return "Excellent";
-  if (score >= 78) return "Very Good";
-  if (score >= 65) return "Good";
-  if (score >= 50) return "Weak";
-  return "Poor";
-}
 
 export default function OutfitCard({
   outfit,
@@ -20,8 +10,7 @@ export default function OutfitCard({
   onWoreThis,
   isFeatured = false,
 }) {
-  const { score, items, breakdowns } = outfit;
-  const label = getScoreLabel(score);
+  const { score, items } = outfit;
 
   return (
     <article
@@ -44,28 +33,11 @@ export default function OutfitCard({
       <div className={cn("flex flex-1 flex-col p-6 sm:p-8", isFeatured ? "justify-center" : "")}>
         
         {/* Score Header */}
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="font-heading text-xl font-bold tracking-tight text-foreground">{label}</span>
-            <span className="text-muted-foreground/50">•</span>
-            <span className="text-sm font-medium text-muted-foreground">{score}% Match</span>
-          </div>
-        </div>
-
-        {/* Item Chips */}
-        <div className="mb-5 flex flex-wrap gap-2">
-          {items.map((item) => (
-            <span
-              key={item.id}
-              className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted-foreground/10 hover:text-foreground cursor-default"
-            >
-              <span
-                className="h-2 w-2 rounded-full shadow-sm"
-                style={{ backgroundColor: (item.color_primary || "").toLowerCase() }}
-              />
-              {CATEGORY_LABELS[item.category]} · <span className="capitalize">{item.color_primary}</span>
-            </span>
-          ))}
+        <div className="mb-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+            <Sparkles className="h-3.5 w-3.5" />
+            {score}% Match
+          </span>
         </div>
 
         {/* Explanation */}
@@ -78,29 +50,6 @@ export default function OutfitCard({
             </span>
           )}
         </p>
-
-        {/* Visual Score Breakdown */}
-        {breakdowns && breakdowns.length > 0 && (
-          <div className="mb-8 space-y-4 rounded-2xl bg-muted/30 p-5 border border-border/40">
-            {breakdowns.map((b) => (
-              <div key={b.category} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-foreground/80">{b.category}</span>
-                  <span className="font-medium text-muted-foreground tabular-nums">
-                    {b.points}/{b.max}
-                  </span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/80">
-                  <div
-                    className="h-full rounded-full bg-foreground transition-all duration-1000 ease-out"
-                    style={{ width: `${(Math.max(0, b.points) / b.max) * 100}%` }}
-                  />
-                </div>
-                <p className="text-[10px] text-muted-foreground/70">{b.reason}</p>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Action Button */}
         <div className="mt-auto flex justify-end">
