@@ -8,11 +8,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Upload, Check, AlertCircle } from "lucide-react";
+import { Loader2, Upload, Check, AlertCircle, RefreshCw } from "lucide-react";
 import { db } from "@/api/firebaseClient";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";
 import TagEditor from "./TagEditor";
+import { prepareUploadImage } from "@/lib/imageUtils";
 
 function normalizeTags(result) {
   return {
@@ -29,6 +30,7 @@ function normalizeTags(result) {
 
 const PHASE = {
   SELECT: "select",
+  PREPARING: "preparing",
   PROCESSING_BG: "processing_bg",
   UPLOADING: "uploading",
   TAGGING: "tagging",
@@ -39,12 +41,14 @@ const PHASE = {
 export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
   const { user } = useAuth();
   const [phase, setPhase] = useState(PHASE.SELECT);
+  const [statusMessage, setStatusMessage] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
   const [tags, setTags] = useState(null);
   const [error, setError] = useState(null);
 
   const reset = () => {
     setPhase(PHASE.SELECT);
+    setStatusMessage("");
     setImageUrl(null);
     setTags(null);
     setError(null);
@@ -55,58 +59,127 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
     onOpenChange(open);
   };
 
-  const processFile = async (file) => {
-    if (!file || !user) return;
+  const processFile = async (rawFile) => {
+    if (!rawFile || !user) return;
     setError(null);
-    try {
-      // 1. Remove background client-side (using default high-quality model for sharpness)
-      setPhase(PHASE.PROCESSING_BG);
-      const { removeBackground } = await import("@imgly/background-removal");
-      
-      const transparentBlob = await removeBackground(file);
-      
-      // Convert Blob to File to pass to Vercel Blob
-      // .png extension for maximum lossless quality and transparency
-      const cleanFile = new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: "image/png" });
+    const pipelineStart = performance.now();
 
-      // 2. Upload the processed photo to Vercel Blob via our serverless function
+    try {
+      // -----------------------------------------------------------------------
+      // Stage 1: Image Selection, Decoding, EXIF Correction & Resizing
+      // -----------------------------------------------------------------------
+      setPhase(PHASE.PREPARING);
+      setStatusMessage("Preparing & resizing photo for fast processing…");
+
+      const tPrepStart = performance.now();
+      const prepared = await prepareUploadImage(rawFile, 1400);
+      const prepTime = Math.round(performance.now() - tPrepStart);
+
+      // -----------------------------------------------------------------------
+      // Stage 2: Client-side Background Removal (with Timeout & Fallback)
+      // -----------------------------------------------------------------------
+      setPhase(PHASE.PROCESSING_BG);
+      setStatusMessage("Removing background…");
+
+      const tBgStart = performance.now();
+      let uploadFile = prepared.file;
+
+      try {
+        const { removeBackground } = await import("@imgly/background-removal");
+        
+        // 30-second abort controller timeout to prevent hanging on slow hardware
+        const bgPromise = removeBackground(prepared.blob);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("BG_TIMEOUT")), 30000)
+        );
+
+        const transparentBlob = await Promise.race([bgPromise, timeoutPromise]);
+        
+        const cleanName = rawFile.name.replace(/\.[^/.]+$/, "") + ".png";
+        uploadFile = new File([transparentBlob], cleanName, { type: "image/png" });
+
+        const bgTime = Math.round(performance.now() - tBgStart);
+        console.log(`[Upload Audit] Background removal completed in ${bgTime}ms`);
+      } catch (bgErr) {
+        console.warn("[Upload Audit] Background removal skipped/failed:", bgErr.message);
+        // Fallback: Continue with the pre-resized clean JPEG
+        uploadFile = prepared.file;
+      }
+
+      // -----------------------------------------------------------------------
+      // Stage 3: Upload photo to Vercel Blob
+      // -----------------------------------------------------------------------
       setPhase(PHASE.UPLOADING);
-      const filename = `${Date.now()}_${cleanFile.name}`;
+      setStatusMessage("Uploading photo to cloud storage…");
+
+      const tUploadStart = performance.now();
+      const filename = `${Date.now()}_${uploadFile.name}`;
       
       const uploadRes = await fetch(`/api/upload-photo?filename=${encodeURIComponent(filename)}`, {
         method: "POST",
-        body: cleanFile,
+        body: uploadFile,
       });
 
       if (!uploadRes.ok) {
-        throw new Error("Failed to upload photo");
+        const errorText = await uploadRes.text().catch(() => "");
+        throw new Error(`Cloud upload failed (${uploadRes.status}): ${errorText || "Network or size limit issue"}`);
       }
       
       const uploadData = await uploadRes.json();
       const file_url = uploadData.url;
       setImageUrl(file_url);
 
-      // 3. Send to Vercel API for structured tagging.
+      const uploadTime = Math.round(performance.now() - tUploadStart);
+      console.log(`[Upload Audit] Vercel Blob upload completed in ${uploadTime}ms -> ${file_url}`);
+
+      // -----------------------------------------------------------------------
+      // Stage 4: AI Tagging
+      // -----------------------------------------------------------------------
       setPhase(PHASE.TAGGING);
+      setStatusMessage("Analyzing clothing item with AI…");
+
+      const tTagStart = performance.now();
       const res = await fetch("/api/tag-clothing-item", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageUrl: file_url })
       });
-      if (!res.ok) throw new Error("Tagging failed");
-      const result = await res.json();
 
-      // 4. Show extracted tags for the user to correct before saving.
+      if (!res.ok) {
+        throw new Error("AI tagging failed to analyze the clothing photo.");
+      }
+
+      const result = await res.json();
+      const tagTime = Math.round(performance.now() - tTagStart);
+      const totalPipelineTime = Math.round(performance.now() - pipelineStart);
+
+      console.log(`
+==================================================
+[UPLOAD PIPELINE AUDIT COMPLETED]
+├── Resize & EXIF: ${prepTime}ms
+├── Vercel Upload: ${uploadTime}ms
+├── AI Tagging:    ${tagTime}ms
+└── TOTAL TIME:    ${totalPipelineTime}ms
+==================================================
+`);
+
+      // -----------------------------------------------------------------------
+      // Stage 5: Tag Review & Edit
+      // -----------------------------------------------------------------------
       setTags(normalizeTags(result));
       setPhase(PHASE.EDITING);
     } catch (e) {
-      setError(e?.message || "Something went wrong. Please try again.");
+      console.error("[Upload Audit] Pipeline error:", e);
+      setError(e?.message || "An unexpected error occurred during upload.");
       setPhase(PHASE.SELECT);
     }
   };
 
   const handleSave = async () => {
     setPhase(PHASE.SAVING);
+    setStatusMessage("Saving item to your wardrobe…");
+    const tSaveStart = performance.now();
+
     try {
       const newItemRef = doc(collection(db, "users", user.id, "clothingItems"));
       await setDoc(newItemRef, {
@@ -122,13 +195,20 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
         laundry_status: "clean",
         created_date: new Date().toISOString()
       });
+
+      console.log(`[Upload Audit] Firestore save completed in ${Math.round(performance.now() - tSaveStart)}ms`);
       onSaved?.();
       handleClose(false);
     } catch (e) {
-      setError(e?.message || "Could not save. Please try again.");
+      setError(e?.message || "Could not save to database. Please check your connection.");
       setPhase(PHASE.EDITING);
     }
   };
+
+  const isProcessing =
+    phase === PHASE.PREPARING ||
+    phase === PHASE.PROCESSING_BG ||
+    phase === PHASE.UPLOADING;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -138,26 +218,30 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
           <DialogDescription>
             {phase === PHASE.EDITING
               ? "AI tagged your item. Correct anything that's off, then save."
-              : "Upload a photo — we'll remove the background, and AI will tag it."}
+              : "Upload a photo — we'll prepare it, remove the background, and AI will tag it."}
           </DialogDescription>
         </DialogHeader>
 
         {error && (
-          <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 p-3.5 text-sm text-destructive border border-destructive/20">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{error}</span>
+            <div className="flex-1 space-y-1">
+              <p className="font-semibold">Upload failed</p>
+              <p className="text-xs opacity-90">{error}</p>
+            </div>
           </div>
         )}
 
-        {/* Photo upload / process step */}
-        {(phase === PHASE.SELECT || phase === PHASE.PROCESSING_BG || phase === PHASE.UPLOADING) && (
-          <div className="flex aspect-[4/3] flex-col items-center justify-center gap-4 rounded-xl border border-dashed bg-muted/20">
-            {phase === PHASE.PROCESSING_BG || phase === PHASE.UPLOADING ? (
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <span className="text-sm text-muted-foreground text-center px-4">
-                  {phase === PHASE.PROCESSING_BG ? "Removing background...\n(This downloads a small AI model the very first time you use it, but will be instant afterwards!)" : "Uploading clean photo..."}
-                </span>
+        {/* Stage 1-3: File selection & Progress */}
+        {(phase === PHASE.SELECT || isProcessing) && (
+          <div className="flex aspect-[4/3] flex-col items-center justify-center gap-4 rounded-xl border border-dashed bg-muted/20 p-6">
+            {isProcessing ? (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="space-y-1">
+                  <p className="font-medium text-sm text-foreground">{statusMessage}</p>
+                  <p className="text-xs text-muted-foreground">Please keep this window open.</p>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -166,7 +250,7 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
                   <span className="font-medium">Take Photo</span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif"
                     capture="environment"
                     className="hidden"
                     onChange={(e) => processFile(e.target.files?.[0])}
@@ -177,7 +261,7 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
                   <span className="font-medium text-foreground">Upload Photo</span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif"
                     className="hidden"
                     onChange={(e) => processFile(e.target.files?.[0])}
                   />
@@ -187,19 +271,19 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
           </div>
         )}
 
-        {/* AI tagging step */}
+        {/* Stage 4: AI Tagging step */}
         {phase === PHASE.TAGGING && imageUrl && (
           <div className="space-y-4">
-            <div className="h-28 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
+            <div className="h-28 w-24 shrink-0 overflow-hidden rounded-lg bg-muted border">
               <img
                 src={imageUrl}
                 alt="item"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
               />
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> AI is tagging your
-              item…
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>{statusMessage}</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -212,22 +296,21 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
           </div>
         )}
 
-        {/* Tag review / edit step */}
+        {/* Stage 5: Tag review / edit step */}
         {(phase === PHASE.EDITING || phase === PHASE.SAVING) &&
           imageUrl &&
           tags && (
-            <div className="max-h-[60vh] space-y-4 overflow-y-auto">
-              <div className="flex gap-4">
-                <div className="h-28 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
+            <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+              <div className="flex gap-4 items-center">
+                <div className="h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-muted border">
                   <img
                     src={imageUrl}
                     alt="item"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Review the AI's tags below. Tap any field to fix it — don't
-                  trust the first guess.
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Review the AI's tags below. Tap any field to fix it if anything is incorrect.
                 </p>
               </div>
               <TagEditor tags={tags} onChange={setTags} />
