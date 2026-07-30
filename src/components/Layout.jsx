@@ -2,6 +2,7 @@ import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Shirt, Sparkles, Clock, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ModeToggle } from "@/components/ModeToggle";
 
 const navItems = [
   { to: "/", label: "Closet", icon: Shirt, end: true },
@@ -57,6 +58,7 @@ export default function Layout() {
             >
               <Settings className="h-4 w-4" />
             </NavLink>
+            <ModeToggle />
           </div>
         </div>
       </header>
@@ -75,7 +77,7 @@ export default function Layout() {
         </AnimatePresence>
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur md:hidden">
+      <nav className="fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur md:hidden pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-6xl px-2 h-16 flex items-center justify-around">
           {navItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink

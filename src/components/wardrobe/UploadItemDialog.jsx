@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, Check, AlertCircle } from "lucide-react";
-import { db, storage } from "@/api/firebaseClient";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "@/api/firebaseClient";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";
 import TagEditor from "./TagEditor";
@@ -59,12 +58,21 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
     if (!file || !user) return;
     setError(null);
     try {
-      // 1. Upload the photo.
+      // 1. Upload the photo to Vercel Blob via our serverless function
       setPhase(PHASE.UPLOADING);
       const filename = `${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `users/${user.id}/clothingItems/${filename}`);
-      await uploadBytes(storageRef, file);
-      const file_url = await getDownloadURL(storageRef);
+      
+      const uploadRes = await fetch(`/api/upload-photo?filename=${encodeURIComponent(filename)}`, {
+        method: "POST",
+        body: file, // Send file directly as binary payload
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload photo");
+      }
+      
+      const uploadData = await uploadRes.json();
+      const file_url = uploadData.url;
       setImageUrl(file_url);
 
       // 2. Send to Vercel API for structured tagging.

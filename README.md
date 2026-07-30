@@ -13,7 +13,7 @@ What To Wear AI solves the daily struggle of deciding what to wear by acting as 
 
 ## Tech Stack
 - **Frontend**: React, Vite, Tailwind CSS, shadcn/ui
-- **Backend**: Firebase (Authentication, Firestore, Storage)
+- **Backend**: Firebase (Authentication, Firestore) and Vercel Blob (File Storage)
 - **AI**: Google Gemini API, called via Vercel Serverless Functions (keeps the API key server-side, never exposed to the browser)
 - **Deployment**: Vercel
 
@@ -36,9 +36,9 @@ You will need to fill in your `.env` file with credentials from Firebase and Goo
 | `VITE_FIREBASE_API_KEY` | Firebase API Key | [Firebase Console](https://console.firebase.google.com/) -> Project Settings |
 | `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain | Firebase Console -> Project Settings |
 | `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID | Firebase Console -> Project Settings |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage Bucket | Firebase Console -> Project Settings |
 | `VITE_FIREBASE_APP_ID` | Firebase App ID | Firebase Console -> Project Settings |
 | `GEMINI_API_KEY` | Google Gemini API Key | [Google AI Studio](https://aistudio.google.com/app/apikey) |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob Token | Vercel Dashboard -> Storage -> Blob |
 
 ### 3. Run Locally
 To run the full stack locally (including the `/api` serverless functions for AI generation), use the Vercel CLI:
