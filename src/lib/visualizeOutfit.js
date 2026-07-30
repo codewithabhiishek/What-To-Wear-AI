@@ -31,17 +31,19 @@ function setCached(key, url) {
   }
 }
 
-// Visual-focused description of one item for the image prompt.
-function describeForImage(item) {
-  const base = [item.color_primary, item.pattern, item.fit, item.category]
-    .filter(Boolean)
-    .join(" ");
-  return item.material ? `${base} made of ${item.material}` : base;
+export function describeForImage(item) {
+  const parts = [];
+  if (item.color_primary) parts.push(item.color_primary);
+  if (item.pattern && item.pattern !== "solid") parts.push(item.pattern);
+  if (item.fit && item.fit !== "regular") parts.push(item.fit);
+  parts.push(item.category);
+  if (item.material) parts.push(`made of ${item.material}`);
+  return parts.join(" ");
 }
 
 export function buildVisualizePrompt(items) {
   const list = items.map(describeForImage).join(", ");
-  return `High-end fashion editorial photography, full-body shot of a stylish, attractive fashion model wearing this exact outfit: ${list}. Studio lighting, Vogue magazine style, photorealistic, 8k resolution, confident pose. The clothing should be the absolute main focus. No text, no logos.`;
+  return `Professional e-commerce product photography of a clean, bright white headless retail mannequin standing on a seamless white background, wearing this exact outfit: ${list}. High-end studio lighting, minimalist, clean, 8k resolution, crisp photorealistic style. The clothing should be the absolute main focus. No text, no logos.`;
 }
 
 export async function visualizeOutfit(items, occasion) {
