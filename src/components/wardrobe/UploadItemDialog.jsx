@@ -29,6 +29,7 @@ function normalizeTags(result) {
 
 const PHASE = {
   SELECT: "select",
+  PROCESSING_BG: "processing_bg",
   UPLOADING: "uploading",
   TAGGING: "tagging",
   EDITING: "editing",
@@ -54,17 +55,28 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
     onOpenChange(open);
   };
 
-  const handleFile = async (file) => {
+  const processFile = async (file) => {
     if (!file || !user) return;
     setError(null);
     try {
-      // 1. Upload the photo to Vercel Blob via our serverless function
+      // 1. Remove background client-side
+      setPhase(PHASE.PROCESSING_BG);
+      const { removeBackground } = await import("@imgly/background-removal");
+      
+      // We pass the raw File object. removeBackground works with Blob/File/URL.
+      const transparentBlob = await removeBackground(file);
+      
+      // Convert Blob to File to pass to Vercel Blob
+      // .png extension because removeBackground outputs PNG for transparency
+      const cleanFile = new File([transparentBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: "image/png" });
+
+      // 2. Upload the processed photo to Vercel Blob via our serverless function
       setPhase(PHASE.UPLOADING);
-      const filename = `${Date.now()}_${file.name}`;
+      const filename = `${Date.now()}_${cleanFile.name}`;
       
       const uploadRes = await fetch(`/api/upload-photo?filename=${encodeURIComponent(filename)}`, {
         method: "POST",
-        body: file, // Send file directly as binary payload
+        body: cleanFile,
       });
 
       if (!uploadRes.ok) {
@@ -75,7 +87,7 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
       const file_url = uploadData.url;
       setImageUrl(file_url);
 
-      // 2. Send to Vercel API for structured tagging.
+      // 3. Send to Vercel API for structured tagging.
       setPhase(PHASE.TAGGING);
       const res = await fetch("/api/tag-clothing-item", {
         method: "POST",
@@ -85,7 +97,7 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
       if (!res.ok) throw new Error("Tagging failed");
       const result = await res.json();
 
-      // 3. Show extracted tags for the user to correct before saving.
+      // 4. Show extracted tags for the user to correct before saving.
       setTags(normalizeTags(result));
       setPhase(PHASE.EDITING);
     } catch (e) {
@@ -127,7 +139,7 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
           <DialogDescription>
             {phase === PHASE.EDITING
               ? "AI tagged your item. Correct anything that's off, then save."
-              : "Upload a photo — AI will tag it, and you confirm before it's saved."}
+              : "Upload a photo — we'll remove the background, and AI will tag it."}
           </DialogDescription>
         </DialogHeader>
 
@@ -138,28 +150,42 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
           </div>
         )}
 
-        {/* Photo upload step */}
-        {(phase === PHASE.SELECT || phase === PHASE.UPLOADING) && (
-          <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-muted/40 transition-colors hover:bg-muted">
-            {phase === PHASE.UPLOADING ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="grid h-12 w-12 place-items-center rounded-full bg-background text-muted-foreground">
-                  <Upload className="h-5 w-5" />
-                </div>
+        {/* Photo upload / process step */}
+        {(phase === PHASE.SELECT || phase === PHASE.PROCESSING_BG || phase === PHASE.UPLOADING) && (
+          <div className="flex aspect-[4/3] flex-col items-center justify-center gap-4 rounded-xl border border-dashed bg-muted/20">
+            {phase === PHASE.PROCESSING_BG || phase === PHASE.UPLOADING ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  Tap to upload a photo
+                  {phase === PHASE.PROCESSING_BG ? "Removing background (this might take a moment)..." : "Uploading clean photo..."}
                 </span>
-              </>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-background px-6 py-4 shadow-sm transition-colors hover:bg-muted">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium text-foreground">Upload Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => processFile(e.target.files?.[0])}
+                  />
+                </label>
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-primary px-6 py-4 text-primary-foreground shadow-sm hover:bg-primary/90">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  <span className="font-medium">Take Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => processFile(e.target.files?.[0])}
+                  />
+                </label>
+              </div>
             )}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => handleFile(e.target.files?.[0])}
-            />
-          </label>
+          </div>
         )}
 
         {/* AI tagging step */}
