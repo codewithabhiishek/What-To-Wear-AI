@@ -2,200 +2,221 @@ import { cn } from "@/lib/utils";
 import { CATEGORY_LABELS } from "@/lib/wardrobeConstants";
 
 /**
- * Per-category placement on the mannequin container (percent-based).
- * Coordinates tuned to the new, more realistic mannequin SVG below.
+ * Premium Mannequin View
+ * ──────────────────────
+ * Solid warm-gray mannequin (not wireframe) with smooth gradients and shading.
+ * Garments are layered in correct dressing order:
+ *   Mannequin → Pants → Shirt (overlaps pants waist) → Outerwear → Shoes
+ *
+ * The shirt top % intentionally reaches INTO the pants top % to simulate
+ * the shirt naturally overlapping the waistband.
  */
-const MANNEQUIN_SLOTS = {
-  outerwear: {
-    top: "7%",
-    left: "50%",
-    width: "76%",
-    height: "36%",
-    zIndex: 4,
-    transform: "translateX(-50%)",
-  },
-  top: {
-    top: "11%",
-    left: "50%",
-    width: "62%",
-    height: "31%",
-    zIndex: 3,
-    transform: "translateX(-50%)",
-  },
-  bottom: {
-    top: "38%",
-    left: "50%",
-    width: "50%",
-    height: "40%",
-    zIndex: 3,
-    transform: "translateX(-50%)",
-  },
-  shoes: {
-    bottom: "3%",
-    left: "50%",
-    width: "40%",
-    height: "12%",
-    zIndex: 5,
-    transform: "translateX(-50%)",
-  },
-  accessory: {
-    top: "9%",
-    right: "7%",
-    width: "20%",
-    height: "15%",
-    zIndex: 6,
-  },
+
+// Garment slots as % of container. Shirt (top) extends PAST pants' top edge
+// so the shirt overlaps the waistband — exactly like real clothing.
+const SLOTS = {
+  outerwear: { top: "4%",  height: "53%", width: "84%", zIndex: 5 },
+  top:       { top: "8%",  height: "46%", width: "70%", zIndex: 3 },
+  bottom:    { top: "42%", height: "55%", width: "54%", zIndex: 2 },
+  shoes:     { top: "89%", height: "9%",  width: "48%", zIndex: 4 },
+  accessory: { top: "6%",  right: "4%",  height: "13%", width: "16%", zIndex: 6 },
 };
 
-const LAYER_ORDER = ["outerwear", "top", "bottom", "shoes", "accessory"];
+const LAYER_ORDER = ["bottom", "top", "outerwear", "shoes", "accessory"];
 
-/**
- * Redesigned mannequin silhouette — slender, fashion-forward.
- * Fill is nearly transparent so clothing items are the star.
- * Only a soft stroke defines the human shape.
- */
-function MannequinSilhouette() {
+/** Premium solid mannequin — warm gray, smooth gradients, no wireframe */
+function MannequinBody() {
   return (
     <svg
-      viewBox="0 0 240 540"
+      viewBox="0 0 240 520"
       className="absolute inset-0 h-full w-full"
       aria-hidden="true"
       preserveAspectRatio="xMidYMid meet"
     >
       <defs>
-        {/* Near-invisible fill — just a ghost hint of a body */}
-        <linearGradient id="mq-fill" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.06" />
-          <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0.03" />
+        {/* Main body fill: side-to-side gradient creates roundness */}
+        <linearGradient id="mq-body" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#A8A49F" />
+          <stop offset="30%"  stopColor="#CCC8C3" />
+          <stop offset="50%"  stopColor="#D6D2CD" />
+          <stop offset="70%"  stopColor="#C8C4BF" />
+          <stop offset="100%" stopColor="#A4A09B" />
         </linearGradient>
-        {/* Soft shadow under the figure */}
+
+        {/* Arm gradient — slightly darker than body */}
+        <linearGradient id="mq-arm" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#9C9892" />
+          <stop offset="40%"  stopColor="#C0BCB7" />
+          <stop offset="100%" stopColor="#9C9892" />
+        </linearGradient>
+
+        {/* Vertical tonal shift — subtle darker at bottom for depth */}
+        <linearGradient id="mq-vert" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"   stopColor="#fff" stopOpacity="0.10" />
+          <stop offset="60%"  stopColor="#fff" stopOpacity="0" />
+          <stop offset="100%" stopColor="#000" stopOpacity="0.08" />
+        </linearGradient>
+
+        {/* Chest highlight — subtle convex sheen */}
+        <radialGradient id="mq-chest-hl" cx="50%" cy="38%" r="45%">
+          <stop offset="0%"   stopColor="#fff" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+        </radialGradient>
+
+        {/* Floor shadow */}
         <radialGradient id="mq-floor" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.12" />
-          <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
+          <stop offset="0%"   stopColor="#000" stopOpacity="0.14" />
+          <stop offset="100%" stopColor="#000" stopOpacity="0" />
         </radialGradient>
       </defs>
 
-      {/* Floor shadow ellipse */}
-      <ellipse cx="120" cy="526" rx="52" ry="8" fill="url(#mq-floor)" />
+      {/* ── Floor shadow ─────────────────────────── */}
+      <ellipse cx="120" cy="510" rx="58" ry="9" fill="url(#mq-floor)" />
 
-      {/* Head — small, refined */}
-      <ellipse
-        cx="120"
-        cy="28"
-        rx="17"
-        ry="21"
-        fill="url(#mq-fill)"
-        stroke="hsl(var(--foreground))"
-        strokeWidth="1"
-        strokeOpacity="0.18"
+      {/* ── Neck ────────────────────────────────── */}
+      <path
+        d="M 104 0 C 104 0 104 10 104 24 Q 120 30 136 24 C 136 10 136 0 136 0 Z"
+        fill="url(#mq-body)"
       />
 
-      {/* Neck */}
-      <rect
-        x="112"
-        y="49"
-        width="16"
-        height="16"
-        rx="3"
-        fill="url(#mq-fill)"
-        stroke="hsl(var(--foreground))"
-        strokeWidth="1"
-        strokeOpacity="0.14"
-      />
-
+      {/* ── Main torso + hips + leg channel ─────── */}
       {/*
-        Main torso — elegant hourglass:
-        · Wide shoulders ~y65
-        · Narrow waist    ~y195
-        · Hip flare       ~y238
-        · Splits into two slim legs to ~y510
+        Shoulders at y=28, x=44 to x=196
+        Waist at y=218, x=82 to x=158
+        Hips at y=260, x=72 to x=168
+        Legs split from y=260 to y=498
       */}
       <path
         d="
-          M 120 65
-          C 88 65 58 70 44 82
-          C 30 94 28 112 28 130
-          L 28 190
-          C 28 210 42 222 62 228
-          L 68 238
-          L 74 510
-          L 100 510
-          L 104 252
-          L 136 252
-          L 140 510
-          L 166 510
-          L 172 238
-          L 178 228
-          C 198 222 212 210 212 190
-          L 212 130
-          C 212 112 210 94 196 82
-          C 182 70 152 65 120 65
+          M 104 24
+          C  76 24  46 30  30 46
+          C  18 58  14 76  14 96
+          L  14 196
+          C  14 218  26 232  46 238
+          L  58 242
+          C  62 256  64 270  64 284
+          L  68 304
+          L  72 498
+          L 104 498
+          L 106 280
+          L 134 280
+          L 136 498
+          L 168 498
+          L 172 304
+          L 176 284
+          C 176 270 178 256 182 242
+          L 194 238
+          C 214 232 226 218 226 196
+          L 226  96
+          C 226  76 222  58 210  46
+          C 194  30 164  24 136  24
           Z
         "
-        fill="url(#mq-fill)"
-        stroke="hsl(var(--foreground))"
-        strokeWidth="1"
-        strokeOpacity="0.15"
-        strokeLinejoin="round"
+        fill="url(#mq-body)"
+      />
+      {/* Vertical tonal overlay (same path) */}
+      <path
+        d="
+          M 104 24
+          C  76 24  46 30  30 46 C  18 58  14 76  14 96
+          L  14 196 C  14 218  26 232  46 238 L  58 242
+          C  62 256  64 270  64 284 L  68 304
+          L  72 498 L 104 498 L 106 280 L 134 280 L 136 498
+          L 168 498 L 172 304 L 176 284
+          C 176 270 178 256 182 242 L 194 238
+          C 214 232 226 218 226 196 L 226 96
+          C 226  76 222  58 210  46 C 194  30 164  24 136  24 Z
+        "
+        fill="url(#mq-vert)"
+      />
+      {/* Chest highlight */}
+      <path
+        d="
+          M 104 24 C 76 24 46 30 30 46 C 18 58 14 76 14 96
+          L 14 196 C 14 218 26 232 46 238 L 194 238
+          C 214 232 226 218 226 196 L 226 96
+          C 226 76 222 58 210 46 C 194 30 164 24 136 24 Z
+        "
+        fill="url(#mq-chest-hl)"
       />
 
-      {/* Left arm — slim rod from shoulder down to mid-hip height */}
+      {/* ── Left arm ────────────────────────────── */}
       <path
-        d="M 44 88 C 34 96 26 112 24 130 L 20 220 C 20 232 28 238 38 234 L 44 200 L 46 120 C 46 104 50 92 62 84 Z"
-        fill="url(#mq-fill)"
-        stroke="hsl(var(--foreground))"
-        strokeWidth="1"
-        strokeOpacity="0.12"
-        strokeLinejoin="round"
+        d="
+          M 14 96
+          C 10 100  4 112  4 128
+          L  4 248
+          C  4 262 10 270 20 268
+          L 28 264
+          L 30 180
+          L 30 100
+          C 28  90 22  86 14  96 Z
+        "
+        fill="url(#mq-arm)"
       />
+      <path d="M 14 96 C 10 100 4 112 4 128 L 4 248 C 4 262 10 270 20 268 L 28 264 L 30 180 L 30 100 C 28 90 22 86 14 96 Z"
+        fill="url(#mq-vert)" />
 
-      {/* Right arm */}
+      {/* ── Right arm ───────────────────────────── */}
       <path
-        d="M 196 88 C 206 96 214 112 216 130 L 220 220 C 220 232 212 238 202 234 L 196 200 L 194 120 C 194 104 190 92 178 84 Z"
-        fill="url(#mq-fill)"
-        stroke="hsl(var(--foreground))"
-        strokeWidth="1"
-        strokeOpacity="0.12"
-        strokeLinejoin="round"
+        d="
+          M 226 96
+          C 234  90 240  86 236  96
+          L 210 100
+          L 210 180
+          L 212 264
+          L 220 268
+          C 230 270 236 262 236 248
+          L 236 128
+          C 236 112 230 100 226 96 Z
+        "
+        fill="url(#mq-arm)"
       />
+      <path d="M 226 96 C 234 90 240 86 236 96 L 210 100 L 210 180 L 212 264 L 220 268 C 230 270 236 262 236 248 L 236 128 C 236 112 230 100 226 96 Z"
+        fill="url(#mq-vert)" />
+
+      {/* ── Waist seam line (very subtle) ───────── */}
+      <line x1="82" y1="218" x2="158" y2="218"
+        stroke="#fff" strokeWidth="0.6" strokeOpacity="0.25" />
     </svg>
   );
 }
 
 export default function MannequinOutfit({ items, className }) {
-  const byCategory = Object.fromEntries(items.map((item) => [item.category, item]));
-  const layers = LAYER_ORDER.filter((cat) => byCategory[cat]);
+  const byCategory = Object.fromEntries(items.map((i) => [i.category, i]));
 
   return (
     <div
       className={cn(
         "relative w-full overflow-hidden rounded-2xl border",
-        "bg-gradient-to-b from-muted/20 via-background to-muted/30",
+        "bg-gradient-to-b from-[#f2f1ef] via-[#eeede9] to-[#e8e7e4]",
+        "dark:from-[#1e1e1e] dark:via-[#1a1a1a] dark:to-[#181818]",
         "shadow-inner",
         className,
       )}
-      style={{ aspectRatio: "3/5" }}
+      style={{ aspectRatio: "2/3" }}
     >
-      {/* Mannequin silhouette — ghost-light, clothes are the focus */}
-      <MannequinSilhouette />
+      {/* Premium mannequin — solid, shaded, warm gray */}
+      <MannequinBody />
 
-      {/* Clothing layers, composited over the silhouette */}
-      {layers.map((category) => {
+      {/* Garments layered in correct dressing order */}
+      {LAYER_ORDER.map((category) => {
         const item = byCategory[category];
-        const slot = MANNEQUIN_SLOTS[category];
+        if (!item) return null;
+        const slot = SLOTS[category];
+        const isRight = !!slot.right;
         return (
           <div
             key={item.id}
             className="absolute flex items-center justify-center"
             style={{
-              top: slot.top,
-              left: slot.left,
-              right: slot.right,
-              bottom: slot.bottom,
-              width: slot.width,
-              height: slot.height,
-              zIndex: slot.zIndex,
-              transform: slot.transform,
+              top:       slot.top,
+              height:    slot.height,
+              width:     slot.width,
+              zIndex:    slot.zIndex,
+              left:      isRight ? "auto" : "50%",
+              right:     isRight ? slot.right : "auto",
+              transform: isRight ? "none" : "translateX(-50%)",
             }}
           >
             <img
@@ -203,7 +224,8 @@ export default function MannequinOutfit({ items, className }) {
               alt={CATEGORY_LABELS[category] || category}
               className="max-h-full max-w-full object-contain"
               style={{
-                filter: "drop-shadow(0px 6px 20px rgba(0,0,0,0.20)) drop-shadow(0px 2px 6px rgba(0,0,0,0.12))",
+                filter:
+                  "drop-shadow(0px 8px 24px rgba(0,0,0,0.22)) drop-shadow(0px 2px 6px rgba(0,0,0,0.14))",
               }}
               draggable={false}
             />
@@ -211,9 +233,9 @@ export default function MannequinOutfit({ items, className }) {
         );
       })}
 
-      {/* Category legend — subtle strip at bottom */}
-      <div className="absolute bottom-3 inset-x-3 flex flex-wrap justify-center gap-1.5">
-        {layers.map((category) => (
+      {/* Category chips */}
+      <div className="absolute bottom-2.5 inset-x-2 flex flex-wrap justify-center gap-1">
+        {LAYER_ORDER.filter((c) => byCategory[c]).map((category) => (
           <span
             key={category}
             className="rounded-full bg-background/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground shadow-sm backdrop-blur-sm"
