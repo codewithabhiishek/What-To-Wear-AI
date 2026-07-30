@@ -66,13 +66,16 @@ export default function WhatToWear() {
       const explained = await Promise.all(
         combos.map(async (combo) => {
           let explanation = "";
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
           try {
             const res = await fetch("/api/generate-outfit-explanation", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 prompt: buildExplanationPrompt(combo, effectiveOccasion)
-              })
+              }),
+              signal: controller.signal
             });
             if (res.ok) {
               const data = await res.json();
@@ -80,6 +83,8 @@ export default function WhatToWear() {
             }
           } catch {
             explanation = "";
+          } finally {
+            clearTimeout(timeoutId);
           }
           return { ...combo, explanation };
         }),

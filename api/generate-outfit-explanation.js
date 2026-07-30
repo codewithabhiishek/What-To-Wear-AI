@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       });
 
       const chatCompletion = await openai.chat.completions.create({
-        model: "meta/llama-3.3-70b-instruct",
+        model: "meta/llama-3.1-8b-instruct",
         messages: [
           { role: "user", content: prompt }
         ],
