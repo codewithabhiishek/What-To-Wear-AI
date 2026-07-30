@@ -1,21 +1,62 @@
-# AI Wardrobe Assistant
+# What To Wear AI
+Personal styling from clothes you already own.
 
-This is an AI-powered wardrobe assistant that helps you organize your clothes, get outfit suggestions based on the occasion, and visualize those outfits on a mannequin.
+## Overview
+What To Wear AI solves the daily struggle of deciding what to wear by acting as a digital, AI-powered personal stylist. Simply upload photos of your clothing, and the AI will automatically tag them with attributes like color, fit, formality, and season. When you need an outfit, just ask for a specific occasion, and the app will generate and rank outfit suggestions built entirely from the items you already own in your closet.
+
+## Features
+- **AI-Powered Clothing Tagging**: Automatically extracts category, color, pattern, fit, formality, material, and season from your uploaded clothing photos.
+- **Occasion-Based Outfit Generation**: A scoring engine builds and ranks outfits based on formality match, silhouette balance, color harmony, variety, and pattern coordination.
+- **AI Outfit Explanations**: Generates a natural-language explanation for why each outfit works well together.
+- **Outfit Visualization**: Generates an on-model visualization of your outfit combination.
+- **Outfit History Tracking**: Tracks outfits you've worn to deprioritize them in future suggestions for better rotation.
 
 ## Tech Stack
-- Frontend: React, Vite, Tailwind CSS, shadcn/ui
-- Backend: Firebase (Auth, Firestore, Storage) for data and auth.
-- AI APIs: Vercel Serverless Functions using the `@google/genai` SDK for Gemini API calls.
+- **Frontend**: React, Vite, Tailwind CSS, shadcn/ui
+- **Backend**: Firebase (Authentication, Firestore, Storage)
+- **AI**: Google Gemini API, called via Vercel Serverless Functions (keeps the API key server-side, never exposed to the browser)
+- **Deployment**: Vercel
 
-## Setup
+## Getting Started
 
-1. Copy `.env.example` to `.env` and fill in your Firebase and Gemini API keys.
-2. Run `npm install`
-3. Run `npm run dev` to start the local development server.
+### 1. Clone and Install
+```bash
+git clone https://github.com/codewithabhiishek/What-To-Wear-AI.git
+cd What-To-Wear-AI
+npm install
+cp .env.example .env
+```
+
+### 2. Environment Variables
+You will need to fill in your `.env` file with credentials from Firebase and Google AI Studio. 
+*Note: Because we use Vercel Serverless Functions for the AI endpoints, `GEMINI_API_KEY` stays safely on the backend.*
+
+| Variable | Description | Where to get it |
+| --- | --- | --- |
+| `VITE_FIREBASE_API_KEY` | Firebase API Key | [Firebase Console](https://console.firebase.google.com/) -> Project Settings |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain | Firebase Console -> Project Settings |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID | Firebase Console -> Project Settings |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage Bucket | Firebase Console -> Project Settings |
+| `VITE_FIREBASE_APP_ID` | Firebase App ID | Firebase Console -> Project Settings |
+| `GEMINI_API_KEY` | Google Gemini API Key | [Google AI Studio](https://aistudio.google.com/app/apikey) |
+
+### 3. Run Locally
+To run the full stack locally (including the `/api` serverless functions for AI generation), use the Vercel CLI:
+```bash
+npx vercel dev
+```
+*Note: If you only run `npm run dev`, Vite will serve the frontend but the AI features will return 404s because the `/api` routes won't be processed. Always use `vercel dev` for full local testing.*
 
 ## Deployment
+Deploying to Vercel is seamless:
+1. Push your code to your GitHub repository.
+2. Go to [Vercel](https://vercel.com/) and import your GitHub repository.
+3. Add all the environment variables from your `.env` file into the Vercel project settings.
+4. Deploy! Vercel will automatically build the React frontend and serve the `api/` directory as serverless functions.
 
-Deploy this project on Vercel:
-1. Connect your GitHub repository to Vercel.
-2. Add your environment variables (Firebase + Gemini API key).
-3. Vercel will automatically build the frontend and deploy the `api/` directory as serverless functions.
+## Project Structure
+- `api/` - Vercel serverless functions proxying Gemini API calls
+- `src/api/` - Firebase client initialization and configuration
+- `src/components/` - Reusable UI components (shadcn/ui and custom wardrobe components)
+- `src/lib/` - Utility functions, outfit scoring engine, and auth context
+- `src/pages/` - Core application views (Closet, WhatToWear, History, Settings, Auth)
