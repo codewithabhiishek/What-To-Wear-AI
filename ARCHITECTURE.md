@@ -8,9 +8,9 @@ This document explains the technical architecture, data flow, and outfit scoring
 - **Backend / API**: Vercel Serverless Functions (`/api/*`)
 - **Database & Auth**: Firebase (Authentication and Firestore database)
 - **File Storage**: Vercel Blob (for storing user-uploaded clothing photos)
-- **AI Engine**: Groq SDK 
-  - `llama-3.2-90b-vision-preview`: Used for image analysis and automatic clothing tagging.
-  - `llama-3.3-70b-versatile`: Used for generating natural language explanations of why an outfit works.
+- **AI Engine**: Hybrid Approach
+  - **GitHub Models** (`gpt-4o`): Used for image analysis and automatic clothing tagging because of its superior vision capabilities and free access.
+  - **Groq SDK** (`llama-3.3-70b-versatile`): Used for generating natural language explanations of why an outfit works.
 
 ## 2. Data Flow & Storage Lifecycle
 How a clothing item is processed and saved by the user:
