@@ -15,12 +15,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
 import Closet from "@/pages/Closet";
 import WhatToWear from "@/pages/WhatToWear";
-import History from "@/pages/History";
-import Settings from "@/pages/Settings";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
+import Favorites from "@/pages/Favorites";
+import { FavoritesProvider } from "@/lib/FavoritesContext";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth } = useAuth();
@@ -49,6 +45,7 @@ const AuthenticatedApp = () => {
         <Route element={<Layout />}>
           <Route path="/" element={<Closet />} />
           <Route path="/what-to-wear" element={<WhatToWear />} />
+          <Route path="/favorites" element={<Favorites />} />
           <Route path="/history" element={<History />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
@@ -61,13 +58,15 @@ const AuthenticatedApp = () => {
 function App() {
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
+      <FavoritesProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <ScrollToTop />
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </FavoritesProvider>
     </AuthProvider>
   );
 }

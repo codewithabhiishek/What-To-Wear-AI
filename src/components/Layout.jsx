@@ -1,12 +1,13 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Shirt, Sparkles, Clock, Settings } from "lucide-react";
+import { Shirt, Sparkles, Heart, Clock, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "@/components/ModeToggle";
 
 const navItems = [
   { to: "/", label: "Closet", icon: Shirt, end: true },
   { to: "/what-to-wear", label: "What to Wear", icon: Sparkles, end: false },
+  { to: "/favorites", label: "Favorites", icon: Heart, end: false },
   { to: "/history", label: "History", icon: Clock, end: false },
 ];
 

@@ -260,6 +260,7 @@ export default function WhatToWear() {
                       <OutfitCard
                         outfit={outfit}
                         explanation={outfit.explanation}
+                        occasion={effectiveOccasion}
                         isFeatured={idx === 0}
                         isLogging={
                           loggingId === outfit.items.map((i) => i.id).join(",")

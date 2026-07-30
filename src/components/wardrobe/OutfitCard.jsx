@@ -1,19 +1,23 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Loader2, Sparkles } from "lucide-react";
+import { Check, Loader2, Sparkles, Heart } from "lucide-react";
 import OutfitMedia from "./OutfitMedia";
 import OutfitDetailDialog from "./OutfitDetailDialog";
+import { useFavorites } from "@/lib/FavoritesContext";
 import { cn } from "@/lib/utils";
 
 export default function OutfitCard({
   outfit,
   explanation,
+  occasion = "casual",
   isLogging,
   onWoreThis,
   isFeatured = false,
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const { isFavorited, toggleFavorite } = useFavorites();
   const { score, items } = outfit;
+  const isFav = isFavorited(outfit);
 
   return (
     <>
@@ -25,6 +29,25 @@ export default function OutfitCard({
       >
         {/* Media Section */}
         <div className="relative w-full border-b bg-muted/20">
+          {/* Top-Right Heart Overlay Button */}
+          <button
+            type="button"
+            aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(outfit, explanation, occasion);
+            }}
+            className="absolute top-2.5 right-2.5 z-20 grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-md transition-all duration-200 hover:scale-110 active:scale-95 hover:bg-background"
+          >
+            <Heart
+              className={cn(
+                "h-4 w-4 transition-all duration-200",
+                isFav
+                  ? "fill-red-500 text-red-500 scale-110"
+                  : "text-foreground/70 hover:text-foreground"
+              )}
+            />
+          </button>
           <OutfitMedia items={items} isFeatured={isFeatured} />
         </div>
 
