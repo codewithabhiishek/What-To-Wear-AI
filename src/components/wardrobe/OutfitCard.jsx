@@ -19,28 +19,23 @@ export default function OutfitCard({
       )}
     >
       {/* Media Section */}
-      <div className="relative w-full border-b">
-        {isFeatured && (
-          <div className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-md backdrop-blur-md">
-            <Sparkles className="h-3.5 w-3.5" /> Best Match
-          </div>
-        )}
-        <OutfitMedia items={items} />
+      <div className="relative w-full border-b bg-muted/20">
+        <OutfitMedia items={items} isFeatured={isFeatured} />
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-1 flex-col p-6 sm:p-8">
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
         
         {/* Score Header */}
-        <div className="mb-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
+        <div className="mb-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            <Sparkles className="h-3 w-3" />
             {score}% Match
           </span>
         </div>
 
         {/* Explanation */}
-        <p className="mb-8 text-base leading-relaxed text-foreground/90 line-clamp-2">
+        <p className="mb-4 text-xs sm:text-sm leading-relaxed text-foreground/80 line-clamp-2 min-h-[2.25rem]">
           {explanation ? (
             explanation
           ) : (
@@ -53,17 +48,18 @@ export default function OutfitCard({
         {/* Action Button */}
         <div className="mt-auto flex justify-end">
           <Button 
-            className="w-full sm:w-auto shadow-sm" 
+            size="sm"
+            className="w-full sm:w-auto shadow-sm text-xs h-8 px-3" 
             onClick={onWoreThis} 
             disabled={isLogging}
           >
             {isLogging ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging…
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Logging…
               </>
             ) : (
               <>
-                <Check className="mr-2 h-4 w-4" /> I Wore This
+                <Check className="mr-1.5 h-3.5 w-3.5" /> I Wore This
               </>
             )}
           </Button>

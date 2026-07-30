@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutGrid, UserRound } from "lucide-react";
+import { LayoutGrid, UserRound, Sparkles } from "lucide-react";
 import PremiumMoodboard from "./PremiumMoodboard";
 import MannequinOutfit from "./MannequinOutfit";
 import { cn } from "@/lib/utils";
@@ -9,12 +9,13 @@ import { cn } from "@/lib/utils";
  * - Flat lay moodboard (default): editorial grid of the user's actual photos
  * - On mannequin: composites the exact uploaded items onto a mannequin silhouette
  */
-export default function OutfitMedia({ items }) {
+export default function OutfitMedia({ items, isFeatured }) {
   const [mode, setMode] = useState("flat"); // "flat" | "mannequin"
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
+    <div className="space-y-2.5 p-3">
+      {/* Header bar with proper padding & no overflow */}
+      <div className="flex items-center justify-between gap-2 px-1">
         <div className="inline-flex rounded-full border bg-muted/40 p-0.5">
           <ViewTab
             active={mode === "flat"}
@@ -29,16 +30,26 @@ export default function OutfitMedia({ items }) {
             label="On mannequin"
           />
         </div>
-        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          {items.length} piece{items.length === 1 ? "" : "s"}
-        </span>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {isFeatured && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm">
+              <Sparkles className="h-3 w-3" /> Best Match
+            </span>
+          )}
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+            {items.length} Pcs
+          </span>
+        </div>
       </div>
 
-      {mode === "flat" ? (
-        <PremiumMoodboard items={items} />
-      ) : (
-        <MannequinOutfit items={items} />
-      )}
+      <div className="relative overflow-hidden rounded-xl">
+        {mode === "flat" ? (
+          <PremiumMoodboard items={items} />
+        ) : (
+          <MannequinOutfit items={items} />
+        )}
+      </div>
     </div>
   );
 }

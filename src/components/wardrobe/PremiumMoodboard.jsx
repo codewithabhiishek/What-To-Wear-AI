@@ -32,7 +32,7 @@ export default function PremiumMoodboard({ items, className }) {
         "bg-[#f5f4f2] dark:bg-[#1c1c1c]",
         className,
       )}
-      style={{ aspectRatio: "3/4" }}
+      style={{ aspectRatio: "4/5" }}
     >
       {/* Very light paper texture */}
       <div

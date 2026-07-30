@@ -121,7 +121,7 @@ export default function MannequinOutfit({ items, className }) {
         "bg-[#fcfcfc] dark:bg-[#121212]",
         className,
       )}
-      style={{ aspectRatio: "2/3" }}
+      style={{ aspectRatio: "4/5" }}
     >
       <MannequinBody />
 
