@@ -105,42 +105,50 @@ export default function WhatToWear() {
 
   const handleGenerate = async () => {
     setGenerating(true);
-    setOutfits(null);
-    setTotalCount(0);
     try {
       const combos = generateOutfits(items, effectiveOccasion, history);
       setTotalCount(combos.totalCount || combos.length);
 
-      // Fetch a one-line explanation per outfit from the API (in parallel).
-      const explained = await Promise.all(
-        combos.map(async (combo) => {
-          let explanation = "";
+      // Instant 0ms response: Render generated outfits immediately
+      const initialOutfits = combos.map((c) => ({
+        ...c,
+        explanation: "A balanced combo from your closet.",
+      }));
+      setOutfits(initialOutfits);
+      setGenerating(false);
+
+      // Background AI explanation stream (Promise.all in background)
+      Promise.all(
+        combos.map(async (combo, idx) => {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
           try {
             const res = await fetch("/api/generate-outfit-explanation", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                prompt: buildExplanationPrompt(combo, effectiveOccasion)
+                prompt: buildExplanationPrompt(combo, effectiveOccasion),
               }),
-              signal: controller.signal
+              signal: controller.signal,
             });
             if (res.ok) {
               const data = await res.json();
-              explanation = data.explanation;
+              if (data.explanation) {
+                setOutfits((prev) =>
+                  (prev || []).map((o, i) =>
+                    i === idx ? { ...o, explanation: data.explanation } : o
+                  )
+                );
+              }
             }
           } catch {
-            explanation = "";
+            /* Keep fallback explanation */
           } finally {
             clearTimeout(timeoutId);
           }
-          return { ...combo, explanation };
-        }),
+        })
       );
-
-      setOutfits(explained);
-    } finally {
+    } catch {
       setGenerating(false);
     }
   };
