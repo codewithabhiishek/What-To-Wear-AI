@@ -179,7 +179,7 @@ export default function WhatToWear() {
           )}
 
           {!generating && outfits && outfits.length > 0 && (
-            <div className="space-y-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {outfits.map((outfit, idx) => {
                 const key = outfit.items.map((i) => i.id).join(",") + idx;
                 return (
@@ -187,7 +187,6 @@ export default function WhatToWear() {
                     key={key}
                     outfit={outfit}
                     explanation={outfit.explanation}
-                    occasion={effectiveOccasion}
                     isLogging={
                       loggingId === outfit.items.map((i) => i.id).join(",")
                     }
