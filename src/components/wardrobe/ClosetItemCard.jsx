@@ -30,7 +30,7 @@ export default function ClosetItemCard({ item, onDelete, onEdit }) {
         <Image
           src={item.image_url}
           alt={item.color_primary || "clothing item"}
-          className="h-full w-full"
+          className="h-full w-full object-contain p-2"
         />
       </div>
       <div className="absolute right-2 top-2 flex gap-1">

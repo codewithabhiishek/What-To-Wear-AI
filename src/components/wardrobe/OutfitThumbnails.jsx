@@ -10,7 +10,7 @@ export default function OutfitThumbnails({ items }) {
             <Image
               src={item.image_url}
               alt={item.color_primary || "item"}
-              className="h-full w-full"
+              className="h-full w-full object-contain p-1"
             />
           </div>
           <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">

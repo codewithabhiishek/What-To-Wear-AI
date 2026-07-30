@@ -222,7 +222,7 @@ export default function MannequinOutfit({ items, className }) {
             <img
               src={item.image_url}
               alt={CATEGORY_LABELS[category] || category}
-              className="max-h-full max-w-full object-contain"
+              className="h-full w-full object-contain"
               style={{
                 filter:
                   "drop-shadow(0px 8px 24px rgba(0,0,0,0.22)) drop-shadow(0px 2px 6px rgba(0,0,0,0.14))",
