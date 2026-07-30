@@ -9,7 +9,7 @@ This document explains the technical architecture, data flow, and outfit scoring
 - **Database & Auth**: Firebase (Authentication and Firestore database)
 - **File Storage**: Vercel Blob (for storing user-uploaded clothing photos)
 - **AI Engine**: Hybrid Approach
-  - **GitHub Models** (`gpt-4o`): Used for image analysis and automatic clothing tagging because of its superior vision capabilities and free access.
+  - **NVIDIA NIM** (`meta/llama-3.2-90b-vision-instruct`): Used for image analysis and automatic clothing tagging because of its superior open-source vision capabilities.
   - **Groq SDK** (`llama-3.3-70b-versatile`): Used for generating natural language explanations of why an outfit works.
 
 ## 2. Data Flow & Storage Lifecycle

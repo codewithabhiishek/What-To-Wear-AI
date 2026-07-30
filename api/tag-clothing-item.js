@@ -21,15 +21,15 @@ export default async function handler(req, res) {
       season: "all-season",
     };
 
-    if (!process.env.GITHUB_TOKEN) {
-      console.warn("GITHUB_TOKEN missing. Returning default tags.");
+    if (!process.env.NVIDIA_API_KEY) {
+      console.warn("NVIDIA_API_KEY missing. Returning default tags.");
       return res.status(200).json(fallbackTags);
     }
 
     try {
       const openai = new OpenAI({ 
-        baseURL: "https://models.inference.ai.azure.com", 
-        apiKey: process.env.GITHUB_TOKEN 
+        baseURL: "https://integrate.api.nvidia.com/v1", 
+        apiKey: process.env.NVIDIA_API_KEY 
       });
 
       // Download the image as base64 to send to OpenAI
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       };
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "meta/llama-3.2-90b-vision-instruct",
         messages: [
           {
             role: "user",
@@ -65,16 +65,18 @@ export default async function handler(req, res) {
             ]
           }
         ],
-        response_format: { type: "json_object" },
         temperature: 0.1,
+        max_tokens: 1024,
       });
 
-      const text = response.choices[0]?.message?.content || "{}";
-      const json = JSON.parse(text);
+      // Llama 3.2 Vision on NVIDIA sometimes wraps JSON in markdown blocks
+      let text = response.choices[0]?.message?.content || "{}";
+      text = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       
+      const json = JSON.parse(text);
       return res.status(200).json(json);
     } catch (innerError) {
-      console.error('GitHub Models call failed, falling back to manual tag review:', innerError);
+      console.error('NVIDIA API call failed, falling back to manual tag review:', innerError);
       return res.status(200).json(fallbackTags);
     }
   } catch (error) {
