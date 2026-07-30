@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import { db } from "@/api/firebaseClient";
 import { collection, doc, setDoc, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";
@@ -174,22 +175,41 @@ export default function WhatToWear() {
           )}
 
           {!generating && outfits && outfits.length > 0 && (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <motion.div 
+              className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: { staggerChildren: 0.04 }
+                }
+              }}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "100px" }}
+            >
               {outfits.map((outfit, idx) => {
                 const key = outfit.items.map((i) => i.id).join(",") + idx;
                 return (
-                  <OutfitCard
+                  <motion.div
                     key={key}
-                    outfit={outfit}
-                    explanation={outfit.explanation}
-                    isLogging={
-                      loggingId === outfit.items.map((i) => i.id).join(",")
-                    }
-                    onWoreThis={() => handleWoreThis(outfit)}
-                  />
+                    variants={{
+                      hidden: { opacity: 0, y: 16 },
+                      show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
+                    }}
+                  >
+                    <OutfitCard
+                      outfit={outfit}
+                      explanation={outfit.explanation}
+                      isLogging={
+                        loggingId === outfit.items.map((i) => i.id).join(",")
+                      }
+                      onWoreThis={() => handleWoreThis(outfit)}
+                    />
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </>
       )}

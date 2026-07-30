@@ -12,7 +12,7 @@ export default function OutfitCard({
   const { score, items, breakdowns } = outfit;
 
   return (
-    <article className="w-full overflow-hidden rounded-2xl border bg-card shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+    <article className="group w-full overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 cursor-pointer [&_img]:transition-all [&_img]:duration-300 [&_img]:ease-out hover:[&_img]:scale-[1.03] hover:[&_img]:brightness-105">
       <OutfitMedia items={items} />
 
       <div className="space-y-3 p-4 pt-3">
@@ -21,7 +21,7 @@ export default function OutfitCard({
           {items.map((item) => (
             <span
               key={item.id}
-              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-muted-foreground/10 hover:text-foreground cursor-default"
             >
               <span
                 className="h-2 w-2 rounded-full border border-border/50"

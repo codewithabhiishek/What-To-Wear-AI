@@ -25,7 +25,7 @@ function FormalityDots({ value }) {
 
 export default function ClosetItemCard({ item, onDelete, onEdit }) {
   return (
-    <div className="group relative overflow-hidden rounded-xl border bg-card shadow-sm">
+    <div className="group relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 cursor-pointer [&_img]:transition-all [&_img]:duration-300 [&_img]:ease-out hover:[&_img]:scale-[1.03] hover:[&_img]:brightness-105">
       <div className="aspect-[3/4] w-full bg-white">
         <Image
           src={item.image_url}
@@ -79,7 +79,7 @@ export default function ClosetItemCard({ item, onDelete, onEdit }) {
 
 function Tag({ text }) {
   return (
-    <span className="pill rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+    <span className="pill rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-muted-foreground/10 hover:text-foreground cursor-default">
       {text}
     </span>
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import { db } from "@/api/firebaseClient";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";
@@ -76,15 +77,28 @@ export default function History() {
           description="When you tap “I wore this” on a suggestion, it'll show up here and be deprioritized next time."
         />
       ) : (
-        <div className="space-y-4">
+        <motion.div 
+          className="space-y-4"
+          variants={{
+            hidden: { opacity: 0 },
+            show: { opacity: 1, transition: { staggerChildren: 0.04 } }
+          }}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "100px" }}
+        >
           {entries.map((entry) => {
             const wornItems = (entry.item_ids || [])
               .map((id) => itemMap[id])
               .filter(Boolean);
             return (
-              <div
+              <motion.div
                 key={entry.id}
-                className="rounded-2xl border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
+                variants={{
+                  hidden: { opacity: 0, y: 16 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
+                }}
+                className="group rounded-2xl border bg-card p-4 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 cursor-pointer [&_img]:transition-all [&_img]:duration-300 [&_img]:ease-out hover:[&_img]:scale-[1.03] hover:[&_img]:brightness-105"
               >
                 <div className="mb-3 flex items-center justify-between">
                   <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium capitalize text-foreground">
@@ -103,10 +117,10 @@ export default function History() {
                     {entry.explanation}
                   </p>
                 )}
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );

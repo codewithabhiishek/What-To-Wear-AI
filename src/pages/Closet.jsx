@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import { db } from "@/api/firebaseClient";
 import { collection, query, orderBy, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";
@@ -67,16 +68,35 @@ export default function Closet() {
           }
         />
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <motion.div 
+          className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+          variants={{
+            hidden: { opacity: 0 },
+            show: {
+              opacity: 1,
+              transition: { staggerChildren: 0.04 }
+            }
+          }}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "100px" }}
+        >
           {items.map((item) => (
-            <ClosetItemCard
+            <motion.div 
               key={item.id}
-              item={item}
-              onDelete={handleDelete}
-              onEdit={setEditingItem}
-            />
+              variants={{
+                hidden: { opacity: 0, y: 16 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
+              }}
+            >
+              <ClosetItemCard
+                item={item}
+                onDelete={handleDelete}
+                onEdit={setEditingItem}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       <UploadItemDialog
