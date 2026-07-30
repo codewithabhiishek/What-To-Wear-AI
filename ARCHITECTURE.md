@@ -131,38 +131,27 @@ Firebase Authentication handles all auth. There is no custom auth server.
 
 ---
 
-## 5. Optimized Clothing Upload Pipeline (`src/lib/imageUtils.js` & `UploadItemDialog.jsx`)
+## 5. Optimized Clothing Upload Pipeline (`src/lib/imageUtils.js` & `uploadPipeline.js`)
 
-How a clothing item goes from a camera photo (e.g. iPhone HEIC/HEIF or 12MP JPEG) → Firestore:
+How a clothing item goes from a camera photo (e.g. iPhone HEIC/HEIF or 12MP JPEG) → Firestore with **Instant 0ms Optimistic UI**:
 
 ```
-1. User opens UploadItemDialog & selects photo
-   └─ PHASE: PREPARING
-      ├── HEIC/HEIF Conversion: Dynamic import of heic2any converts camera files to JPEG Blob.
-      ├── EXIF Orientation: createImageBitmap({ imageOrientation: "from-image" }) corrects rotation.
-      └── Pre-Resize: Downscales 12MP (4032x3024) photo to max 1400px longest side.
-          (Reduces pixel count by 88%, accelerating background removal by 10x).
+1. User selects photo in UploadItemDialog
+   └─ INSTANT (0ms):
+      ├── Local Preview URL: URL.createObjectURL(rawFile) generated instantly.
+      ├── Optimistic Card: Appended at index 0 of Closet grid state immediately.
+      └── Dialog Closes: UploadItemDialog closes instantly without blocking user.
 
-2. Pre-resized Blob → Client-Side Background Removal
-   └─ PHASE: PROCESSING_BG
-      @imgly/background-removal processes 1400px JPEG in WebAssembly.
-      ├── Timeout Protection: 30-second AbortController safeguard.
-      └── Fallback: On timeout/failure, automatically falls back to clean pre-resized JPEG.
+2. Background Execution (uploadPipeline.js):
+   ├── Stage 1: HEIC Conversion & 1400px Downscaling (Canvas EXIF corrected).
+   ├── Stage 2: WebAssembly Background Removal (@imgly/background-removal, 30s fallback).
+   ├── Stage 3: Cloud Upload → Vercel Blob (POST /api/upload-photo).
+   ├── Stage 4: AI Vision Tagging → NVIDIA Llama 3.2 90B (POST /api/tag-clothing-item).
+   └── Stage 5: Firestore Save → users/{userId}/clothingItems/{autoId}.
 
-3. Processed Photo → POST /api/upload-photo
-   └─ PHASE: UPLOADING
-      Vercel Blob stores the image, returns a public HTTPS URL.
-
-4. Image URL → POST /api/tag-clothing-item
-   └─ PHASE: TAGGING
-      NVIDIA Vision (llama-3.2-90b) downloads image, returns JSON tags:
-      { category, color_primary, color_secondary, pattern, fit, formality, material, season }
-
-5. User reviews & corrects tags in TagEditor
-   └─ PHASE: EDITING
-
-6. Confirmed → Firestore: users/{userId}/clothingItems/{autoId}
-   └─ PHASE: SAVING
+3. Seamless In-Place Replacement:
+   When Firestore save completes, the temporary card is replaced in-place in React state
+   without triggering a full page reload or layout shift.
 ```
 
 ### 5.1 Performance Timing Audit
@@ -201,14 +190,30 @@ Runs entirely on the client — no server round-trip — so suggestions appear i
 
 ---
 
-## 7. UI Standardization & Modals
+## 7. UI Standardization & Design System
 
-### 7.1 Uniform Recommendation Grid
-- **Responsive Breakpoints:** 1 column on mobile, 2 on tablet, 3 on desktop (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`).
-- **Fixed Section Heights:** Cards enforce a fixed 40px explanation box (`line-clamp-2`), fixed badge row (`h-6`), and pinned button baseline (`h-8`). Cards are 100% pixel-perfect identical.
-- **Click-to-Expand Modal (`OutfitDetailDialog.jsx`):** Clicking any recommendation card opens a modal with a high-res preview, untruncated style rationale, and garment attribute badges.
+### 7.1 Production-Grade Outfit Details Modal (`OutfitDetailDialog.jsx`)
+- **Strict Grid System:** Aligned to an 8px / 12px / 16px / 24px spacing grid.
+- **36x36 Circular Close Button:** Features a thin border (`border-border/60`), muted dark fill, 90° hover rotation, and active press scale animation.
+- **40% / 60% Rebalanced Split:**
+  - Left (40%): Scaled-down preview panel (`border bg-muted/20`) occupying ~70% height without empty padding.
+  - Right (60%): Style Vibe, compact clothing piece tiles with `h-10` thumbnails, and action buttons.
+- **Equalized Footer:** Primary `"I Wore This"` and Secondary `"Close"` buttons share identical `h-10` heights, `rounded-xl` radii, and `gap-3` spacing.
 
-### 7.2 Closet Search & Filtering (`Closet.jsx`)
+### 7.2 Favorites System (`FavoritesContext.jsx` & `Favorites.jsx`)
+- **Heart Toggle Button:** Positioned on recommendation cards (`OutfitCard.jsx`) with 0ms optimistic UI toggle and toast alerts (*"Added to Favorites ❤️"* / *"Removed from Favorites"*).
+- **Firestore Deduplication:** Document ID is derived from sorted item IDs (`users/{userId}/favoriteOutfits/{outfitKey}`). Toggling off removes the document cleanly.
+- **Favorites Gallery Page:** Allows filtering saved looks by *Occasion* and *Match Score*, with sorting by *Newest Saved*, *Match Score*, or *Occasion*.
+
+### 7.3 Instant 0ms Recommendation Streaming (`WhatToWear.jsx`)
+- **0ms Outfit Cards:** Clicking *"Generate outfits"* scores combos locally in ~2ms and displays outfit cards immediately.
+- **Background AI Explanations:** DeepSeek V4 Flash (`deepseek-ai/deepseek-v4-flash`) fetches short natural rationale in the background and streams explanations live into card states.
+
+### 7.4 High-Fashion Mannequin Renderer (`MannequinOutfit.jsx`)
+- **Minimalist Silhouette:** Headless, slim proportions, rounded shoulders, and tapered legs inspired by luxury fashion retailers (Zara, Uniqlo, COS).
+- **Smart Body Masking:** Automatically fades torso and leg vector paths when covered by clothing, preventing dark/grey silhouette lines from showing through garments.
+
+### 7.5 Closet Search & Filtering (`Closet.jsx`)
 - **Real-Time Search:** Search wardrobe by color, category, pattern, or material.
 - **Category Filter Pills:** Quick toggle between *All*, *Tops*, *Bottoms*, *Shoes*, and *Outerwear*.
 - **Sorting:** Sort items by *Newest*, *Formality*, or *Category*.
