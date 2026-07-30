@@ -7,7 +7,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Image } from "@/components/ui/image";
-import OutfitThumbnails from "./OutfitThumbnails";
+import PremiumMoodboard from "./PremiumMoodboard";
 import { visualizeOutfit } from "@/lib/visualizeOutfit";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ export default function OutfitMedia({ items, occasion }) {
             active={mode === "flat"}
             onClick={() => setMode("flat")}
             icon={ImageIcon}
-            label="Flat-lay"
+            label="Moodboard"
           />
           <SegBtn
             active={mode === "model"}
@@ -64,8 +64,8 @@ export default function OutfitMedia({ items, occasion }) {
         )
       )}
 
-      {/* Flat-lay thumbnails (default + fallback) */}
-      {mode === "flat" && <OutfitThumbnails items={items} />}
+      {/* Premium Moodboard (default + fallback) */}
+      {mode === "flat" && <PremiumMoodboard items={items} />}
 
       {/* Generating */}
       {mode === "model" && visualizing && (
