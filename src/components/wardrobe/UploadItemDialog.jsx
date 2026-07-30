@@ -41,6 +41,7 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
   const [phase, setPhase] = useState(PHASE.SELECT);
   const [imageUrl, setImageUrl] = useState(null);
   const [tags, setTags] = useState(null);
+  const [dimensions, setDimensions] = useState(null);
   const [error, setError] = useState(null);
 
   const reset = () => {
@@ -87,6 +88,25 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
       const file_url = uploadData.url;
       setImageUrl(file_url);
 
+      // Extract image dimensions from the transparent blob
+      const dimensions = await new Promise((resolve) => {
+        const img = new window.Image();
+        const objectUrl = URL.createObjectURL(transparentBlob);
+        img.onload = () => {
+          resolve({ width: img.naturalWidth, height: img.naturalHeight });
+          URL.revokeObjectURL(objectUrl);
+        };
+        img.onerror = () => {
+          resolve({ width: null, height: null });
+          URL.revokeObjectURL(objectUrl);
+        };
+        img.src = objectUrl;
+      });
+
+      // We stash dimensions in `tags` state temporarily or in a ref, but `tags` is set in the next step.
+      // Let's store them directly on `dimensionsRef` or just in state.
+      setDimensions(dimensions);
+
       // 3. Send to Vercel API for structured tagging.
       setPhase(PHASE.TAGGING);
       const res = await fetch("/api/tag-clothing-item", {
@@ -120,6 +140,8 @@ export default function UploadItemDialog({ open, onOpenChange, onSaved }) {
         formality: Number(tags.formality),
         material: tags.material || null,
         season: tags.season,
+        naturalWidth: dimensions?.width || null,
+        naturalHeight: dimensions?.height || null,
         laundry_status: "clean",
         created_date: new Date().toISOString()
       });
