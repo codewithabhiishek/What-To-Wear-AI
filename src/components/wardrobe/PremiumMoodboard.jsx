@@ -1,113 +1,77 @@
 import { cn } from "@/lib/utils";
-import { CATEGORY_LABELS } from "@/lib/wardrobeConstants";
 
-const SLOT_LAYOUT = {
-  top: { area: "top", span: "col-span-1 row-span-1" },
-  outerwear: { area: "outer", span: "col-span-1 row-span-1" },
-  bottom: { area: "bottom", span: "col-span-2 row-span-1" },
-  shoes: { area: "shoes", span: "col-span-1 row-span-1" },
-  accessory: { area: "acc", span: "col-span-1 row-span-1" },
+/**
+ * Fashion-editorial flat-lay: clothing items stacked vertically on a clean
+ * neutral surface — no individual card borders, no excessive gaps.
+ * Items are transparent PNGs (background already removed) so they float
+ * naturally against the background and look like a real flat-lay photo.
+ */
+
+// Proportional vertical space each category gets (larger = taller slot)
+const FLEX = {
+  outerwear: 1.5,
+  top: 1.3,
+  bottom: 1.7,
+  shoes: 1.0,
+  accessory: 0.8,
 };
 
-function MoodboardTile({ item }) {
-  return (
-    <div
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm transition-shadow hover:shadow-md dark:bg-zinc-950"
-    >
-      <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-white to-muted/20 p-3 dark:from-zinc-900 dark:to-zinc-950 min-h-[88px]">
-        <img
-          src={item.image_url}
-          alt={item.color_primary || item.category}
-          className="max-h-[100px] w-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition-transform duration-300 group-hover:scale-105"
-          draggable={false}
-        />
-      </div>
-      <div className="border-t border-border/50 px-2.5 py-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {CATEGORY_LABELS[item.category] || item.category}
-        </p>
-        <p className="mt-0.5 truncate text-xs capitalize text-foreground">
-          {item.color_primary}
-          {item.pattern && item.pattern !== "solid" ? ` · ${item.pattern}` : ""}
-        </p>
-      </div>
-    </div>
-  );
-}
+// Display order from top of frame to bottom
+const ORDER = ["outerwear", "top", "bottom", "shoes", "accessory"];
 
 export default function PremiumMoodboard({ items, className }) {
-  const top = items.find((i) => i.category === "top");
-  const outerwear = items.find((i) => i.category === "outerwear");
-  const bottom = items.find((i) => i.category === "bottom");
-  const shoes = items.find((i) => i.category === "shoes");
-  const accessory = items.find((i) => i.category === "accessory");
-
-  const upperRow = [top, outerwear].filter(Boolean);
-  const lowerExtras = [shoes, accessory].filter(Boolean);
+  // Sort items into natural top-to-bottom dressing order
+  const knownOrder = ORDER.map((cat) => items.find((i) => i.category === cat)).filter(Boolean);
+  const others = items.filter((i) => !ORDER.includes(i.category));
+  const all = [...knownOrder, ...others];
 
   return (
     <div
       className={cn(
-        "relative aspect-[4/5] w-full overflow-hidden rounded-2xl border bg-gradient-to-br from-stone-50 via-white to-stone-100 p-4 shadow-inner dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-900",
+        "relative w-full overflow-hidden rounded-2xl border",
+        // Warm off-white in light mode, deep charcoal in dark
+        "bg-[#f7f6f3] dark:bg-[#171717]",
         className,
       )}
+      style={{ aspectRatio: "3/4" }}
     >
-      {/* Subtle linen texture overlay */}
+      {/* Extremely subtle linen-grain texture */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.35]"
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0)",
-          backgroundSize: "20px 20px",
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3' height='3'%3E%3Ccircle cx='1' cy='1' r='0.6' fill='%23000'/%3E%3C/svg%3E\")",
         }}
       />
 
-      <div className="relative flex h-full flex-col gap-3">
-        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          Your outfit · flat lay
-        </p>
-
-        {/* Upper row: top + outerwear side by side */}
-        {upperRow.length > 0 && (
+      {/* Items: stacked vertically, filling their proportional flex slot */}
+      <div className="relative flex h-full flex-col items-center justify-center px-8 py-5">
+        {all.map((item) => (
           <div
-            className={cn(
-              "grid flex-1 gap-3",
-              upperRow.length === 2 ? "grid-cols-2" : "grid-cols-1",
-            )}
+            key={item.id}
+            className="relative flex w-full min-h-0 items-center justify-center"
+            style={{ flex: FLEX[item.category] ?? 1 }}
           >
-            {upperRow.map((item) => (
-              <MoodboardTile key={item.id} item={item} />
-            ))}
+            <img
+              src={item.image_url}
+              alt={item.color_primary || item.category}
+              className="max-h-full w-full object-contain"
+              style={{
+                // Realistic shadow so items look grounded on a physical surface
+                filter:
+                  "drop-shadow(0px 3px 10px rgba(0,0,0,0.13)) drop-shadow(0px 1px 3px rgba(0,0,0,0.08))",
+              }}
+              draggable={false}
+            />
           </div>
-        )}
+        ))}
+      </div>
 
-        {/* Bottom: full width */}
-        {bottom && (
-          <div className="flex-[1.2]">
-            <MoodboardTile item={bottom} />
-          </div>
-        )}
-
-        {/* Shoes + accessory */}
-        {lowerExtras.length > 0 && (
-          <div
-            className={cn(
-              "grid gap-3",
-              lowerExtras.length === 2 ? "grid-cols-2" : "grid-cols-1",
-            )}
-          >
-            {lowerExtras.map((item) => (
-              <MoodboardTile key={item.id} item={item} />
-            ))}
-          </div>
-        )}
-
-        {/* Fallback for unexpected categories */}
-        {items
-          .filter((i) => !SLOT_LAYOUT[i.category])
-          .map((item) => (
-            <MoodboardTile key={item.id} item={item} />
-          ))}
+      {/* Tiny watermark — unobtrusive */}
+      <div className="pointer-events-none absolute bottom-2 inset-x-0 flex justify-center">
+        <span className="text-[8px] font-semibold uppercase tracking-[0.2em] text-foreground/20">
+          Flat lay
+        </span>
       </div>
     </div>
   );

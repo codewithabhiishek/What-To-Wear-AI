@@ -29,15 +29,22 @@ export function ClosetGridSkeleton({ count = 6 }) {
 
 export function OutfitCardSkeleton() {
   return (
-    <div className="w-full max-w-md mx-auto rounded-2xl border bg-card p-4 shadow-sm">
-      <div className="flex gap-2">
-        <div className="skeleton h-20 w-20 rounded-lg" />
-        <div className="skeleton h-20 w-20 rounded-lg" />
-        <div className="skeleton h-20 w-20 rounded-lg" />
-      </div>
-      <div className="skeleton h-4 w-3/4 rounded-full" />
-      <div className="flex justify-end">
-        <div className="skeleton h-8 w-24 rounded-full" />
+    <div className="w-full rounded-2xl border bg-card shadow-sm overflow-hidden">
+      {/* Moodboard placeholder — matches the 3/4 aspect ratio */}
+      <div className="skeleton w-full rounded-none" style={{ aspectRatio: "3/4" }} />
+      <div className="space-y-3 p-4">
+        {/* Item chips row */}
+        <div className="flex gap-1.5">
+          <div className="skeleton h-5 w-20 rounded-full" />
+          <div className="skeleton h-5 w-16 rounded-full" />
+        </div>
+        {/* Explanation text */}
+        <div className="skeleton h-3 w-full rounded-full" />
+        <div className="skeleton h-3 w-3/4 rounded-full" />
+        {/* Button row */}
+        <div className="flex justify-end pt-1">
+          <div className="skeleton h-8 w-28 rounded-full" />
+        </div>
       </div>
     </div>
   );
@@ -45,7 +52,7 @@ export function OutfitCardSkeleton() {
 
 export function OutfitListSkeleton({ count = 3 }) {
   return (
-    <div className="space-y-4">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: count }).map((_, i) => (
         <OutfitCardSkeleton key={i} />
       ))}
