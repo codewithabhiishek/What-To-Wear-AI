@@ -24,11 +24,11 @@ export default function OutfitCard({
       <article
         onClick={() => setDetailOpen(true)}
         className={cn(
-          "group flex h-full flex-col overflow-hidden rounded-[2rem] border bg-card shadow-md transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl hover:border-primary/30 cursor-pointer [&_img]:transition-all [&_img]:duration-300 [&_img]:ease-out hover:[&_img]:scale-[1.03]"
+          "group flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30 cursor-pointer [&_img]:transition-all [&_img]:duration-300 [&_img]:ease-out hover:[&_img]:scale-[1.02]"
         )}
       >
-        {/* Media Section */}
-        <div className="relative w-full border-b bg-muted/20">
+        {/* Media Section (No switcher, max-height 210px) */}
+        <div className="relative w-full border-b bg-muted/20 p-2.5 pb-1">
           {/* Top-Right Heart Overlay Button */}
           <button
             type="button"
@@ -37,7 +37,7 @@ export default function OutfitCard({
               e.stopPropagation();
               toggleFavorite(outfit, explanation, occasion);
             }}
-            className="absolute top-2.5 right-2.5 z-20 grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-md transition-all duration-200 hover:scale-110 active:scale-95 hover:bg-background"
+            className="absolute top-4 right-4 z-20 grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-md transition-all duration-200 hover:scale-110 active:scale-95 hover:bg-background"
           >
             <Heart
               className={cn(
@@ -48,22 +48,27 @@ export default function OutfitCard({
               )}
             />
           </button>
-          <OutfitMedia items={items} isFeatured={isFeatured} />
+          <OutfitMedia 
+            items={items} 
+            isFeatured={isFeatured} 
+            showSwitcher={false}
+            aspectClass="aspect-[4/5] max-h-[210px] mx-auto"
+          />
         </div>
 
-        {/* Content Section */}
-        <div className="flex flex-1 flex-col p-4 sm:p-5">
+        {/* Content Section (Tight padding, fixed heights) */}
+        <div className="flex flex-1 flex-col p-3.5 sm:p-4 gap-2.5">
           
-          {/* Score Header - Fixed Height */}
-          <div className="mb-2 h-6 flex items-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+          {/* Score Header */}
+          <div className="h-6 flex items-center">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
               <Sparkles className="h-3 w-3" />
               {score}% Match
             </span>
           </div>
 
-          {/* Explanation - Fixed Height (Exactly 2 Lines) */}
-          <div className="mb-4 h-10 flex items-center">
+          {/* Explanation (Exactly 2 Lines Max) */}
+          <div className="h-9 flex items-center">
             <p className="text-xs sm:text-sm leading-snug text-foreground/80 line-clamp-2">
               {explanation ? (
                 explanation
@@ -75,7 +80,7 @@ export default function OutfitCard({
             </p>
           </div>
 
-          {/* Action Button - Pinned Baseline */}
+          {/* Action Button (Pinned to Bottom) */}
           <div className="mt-auto flex justify-end items-center h-8">
             <Button 
               size="sm"
