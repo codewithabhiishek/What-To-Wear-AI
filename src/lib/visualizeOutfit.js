@@ -41,7 +41,7 @@ function describeForImage(item) {
 
 export function buildVisualizePrompt(items) {
   const list = items.map(describeForImage).join(", ");
-  return `Generate a single full-body image of a neutral, faceless mannequin-style figure on a plain white studio background, wearing these exact clothing items combined into one outfit: ${list}. Keep the color, pattern, and fit of each item as close as possible to the reference. Photorealistic clothing, simple neutral pose, no text, no logos, no background props.`;
+  return `High-end fashion editorial photography, full-body shot of a stylish, attractive fashion model wearing this exact outfit: ${list}. Studio lighting, Vogue magazine style, photorealistic, 8k resolution, confident pose. The clothing should be the absolute main focus. No text, no logos.`;
 }
 
 export async function visualizeOutfit(items, occasion) {
