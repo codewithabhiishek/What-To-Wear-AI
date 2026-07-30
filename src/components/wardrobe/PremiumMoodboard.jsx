@@ -3,40 +3,29 @@ import { cn } from "@/lib/utils";
 /**
  * Fashion-editorial flat-lay.
  *
- * Key layout trick: items within each flex slot are justified so they
- * "meet" at the boundary between slots:
- *   - Top/outerwear → justify-end  (image sticks to the BOTTOM of its slot)
- *   - Bottom/shoes  → justify-start (image sticks to the TOP of its slot)
- *
- * Result: shirt bottom and jeans top are visually adjacent, giving a real
- * "clothes laid together" feel instead of two separate floating images.
+ * Layout strategy:
+ * - Each item gets a fixed percentage height (based on category) — no stretchy flex.
+ * - Items are packed together with a tiny gap and the group is centered in the card.
+ * - This guarantees the shirt and jeans are visually adjacent regardless of
+ *   the image's actual aspect ratio (which varies per photo).
  */
 
-// Proportional vertical space each category slot gets
-const FLEX = {
-  outerwear: 1.3,
-  top: 1.1,
-  bottom: 1.6,
-  shoes: 0.85,
-  accessory: 0.7,
+// Fixed height each category item occupies as % of the card height
+const ITEM_HEIGHT = {
+  outerwear: "34%",
+  top:       "30%",
+  bottom:    "42%",
+  shoes:     "18%",
+  accessory: "14%",
 };
 
-// Which end of their slot images anchor to, so adjacent items touch
-const JUSTIFY = {
-  outerwear: "justify-end",
-  top: "justify-end",
-  bottom: "justify-start",
-  shoes: "justify-start",
-  accessory: "justify-center",
-};
-
-// Natural horizontal width for each category (clothes have real proportions)
-const WIDTH = {
-  outerwear: "88%",
-  top: "80%",
-  bottom: "68%",
-  shoes: "58%",
-  accessory: "44%",
+// Horizontal width of each item — clothes have natural real-world proportions
+const ITEM_WIDTH = {
+  outerwear: "86%",
+  top:       "78%",
+  bottom:    "66%",
+  shoes:     "54%",
+  accessory: "42%",
 };
 
 const ORDER = ["outerwear", "top", "bottom", "shoes", "accessory"];
@@ -55,7 +44,7 @@ export default function PremiumMoodboard({ items, className }) {
       )}
       style={{ aspectRatio: "3/4" }}
     >
-      {/* Subtle linen grain texture */}
+      {/* Very subtle linen grain */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.055]"
         style={{
@@ -65,28 +54,28 @@ export default function PremiumMoodboard({ items, className }) {
       />
 
       {/*
-        Each item div stretches to its flex share of the card height.
-        justify-end / justify-start pulls the image to the boundary
-        between items so the outfit looks packed together.
+        Items are fixed-height divs (no stretching) stacked with a 4px gap.
+        The group is centered vertically in the card.
+        Fixed heights mean shirt + jeans always sit close together,
+        independent of each image's actual aspect ratio.
       */}
-      <div className="relative flex h-full flex-col items-center px-6 py-3">
+      <div className="relative flex h-full flex-col items-center justify-center gap-1 px-5 py-3">
         {all.map((item) => (
           <div
             key={item.id}
-            className={cn(
-              "flex min-h-0 w-full flex-col items-center",
-              JUSTIFY[item.category] ?? "justify-center",
-            )}
-            style={{ flex: FLEX[item.category] ?? 1 }}
+            className="flex shrink-0 items-center justify-center"
+            style={{
+              height: ITEM_HEIGHT[item.category] ?? "24%",
+              width: ITEM_WIDTH[item.category] ?? "72%",
+            }}
           >
             <img
               src={item.image_url}
               alt={item.color_primary || item.category}
-              className="max-h-full object-contain"
+              className="max-h-full max-w-full object-contain"
               style={{
-                width: WIDTH[item.category] ?? "75%",
                 filter:
-                  "drop-shadow(0px 3px 12px rgba(0,0,0,0.13)) drop-shadow(0px 1px 3px rgba(0,0,0,0.08))",
+                  "drop-shadow(0px 3px 12px rgba(0,0,0,0.14)) drop-shadow(0px 1px 3px rgba(0,0,0,0.08))",
               }}
               draggable={false}
             />
