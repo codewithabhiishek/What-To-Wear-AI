@@ -42,6 +42,7 @@ what-to-wear-ai/
 │   │   ├── outfitScoring.js      # Client-side outfit combination & additive/subtractive scoring engine
 │   │   ├── uploadPipeline.js     # Decoupled background upload engine with live progress callbacks
 │   │   ├── imageUtils.js         # HEIC conversion, EXIF orientation, downscaling & timing logs
+│   │   ├── garmentImage.js       # Non-destructive alpha-bound trimming for styled-form previews
 │   │   ├── wardrobeConstants.js  # Occasions with icons, category/pattern/fit/season/formality enums
 │   │   ├── authReturnTo.js       # Safe same-origin ?returnTo= resolution
 │   │   ├── query-client.js       # Shared TanStack QueryClient instance
