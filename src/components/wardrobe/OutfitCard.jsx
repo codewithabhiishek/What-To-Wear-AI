@@ -22,13 +22,11 @@ export default function OutfitCard({
   return (
     <>
       <article
-        onClick={() => setDetailOpen(true)}
         className={cn(
-          "group flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30 cursor-pointer [&_img]:transition-all [&_img]:duration-300 [&_img]:ease-out hover:[&_img]:scale-[1.02]"
+          "group flex h-full flex-col overflow-hidden rounded-[1.25rem] border border-border/70 bg-card shadow-sm transition-[transform,box-shadow,border-color] duration-200 ease-out hover:-translate-y-1 hover:border-foreground/20 hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none"
         )}
       >
-        {/* Media Section (No switcher, max-height 210px) */}
-        <div className="relative w-full border-b bg-muted/20 p-2.5 pb-1">
+        <div className="relative border-b border-border/60 bg-muted/20 p-3 sm:p-4">
           {/* Top-Right Heart Overlay Button */}
           <button
             type="button"
@@ -37,7 +35,7 @@ export default function OutfitCard({
               e.stopPropagation();
               toggleFavorite(outfit, explanation, occasion);
             }}
-            className="absolute top-4 right-4 z-20 grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-sm backdrop-blur-md transition-all duration-200 hover:scale-110 active:scale-95 hover:bg-background"
+            className="absolute right-5 top-5 z-20 grid h-9 w-9 place-items-center rounded-full border border-border/50 bg-background/90 text-foreground shadow-sm backdrop-blur-md transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
           >
             <Heart
               className={cn(
@@ -48,28 +46,34 @@ export default function OutfitCard({
               )}
             />
           </button>
-          <OutfitMedia 
-            items={items} 
-            isFeatured={isFeatured} 
-            showSwitcher={false}
-            aspectClass="w-[150px] aspect-[9/14] mx-auto"
-          />
+          <button
+            type="button"
+            onClick={() => setDetailOpen(true)}
+            className="block w-full rounded-[1.05rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label="View outfit details"
+          >
+            <OutfitMedia
+              items={items}
+              isFeatured={isFeatured}
+              showSwitcher={false}
+              aspectClass="w-[min(86vw,252px)] aspect-[9/14] mx-auto"
+            />
+          </button>
         </div>
 
-        {/* Content Section (Tight padding, fixed heights) */}
-        <div className="flex flex-1 flex-col p-3.5 sm:p-4 gap-2.5">
+        <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
           
           {/* Score Header */}
-          <div className="h-6 flex items-center">
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+          <div className="flex h-6 items-center">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
               <Sparkles className="h-3 w-3" />
               {score}% Match
             </span>
           </div>
 
           {/* Explanation (Exactly 2 Lines Max) */}
-          <div className="h-9 flex items-center">
-            <p className="text-xs sm:text-sm leading-snug text-foreground/80 line-clamp-2">
+          <div className="min-h-10">
+            <p className="line-clamp-2 text-sm leading-5 text-foreground/78">
               {explanation ? (
                 explanation
               ) : (
@@ -81,14 +85,14 @@ export default function OutfitCard({
           </div>
 
           {/* Action Button (Pinned to Bottom) */}
-          <div className="mt-auto flex justify-end items-center h-8">
-            <Button 
+          <div className="mt-auto flex items-center justify-end pt-1">
+            <Button
               size="sm"
-              className="w-full sm:w-auto shadow-sm text-xs h-8 px-3" 
+              className="h-9 w-full px-3 text-xs shadow-sm sm:w-auto"
               onClick={(e) => {
                 e.stopPropagation();
                 onWoreThis();
-              }} 
+              }}
               disabled={isLogging}
             >
               {isLogging ? (

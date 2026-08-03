@@ -86,6 +86,7 @@ function StudioForm({ prefix, covered }) {
 function Garment({ item, category }) {
   const anchor = ANCHORS[category];
   const source = useTrimmedGarment(item.image_url);
+  const [loaded, setLoaded] = useState(false);
   if (!anchor) return null;
   const fitScale = item.fit === "oversized" ? 1.035 : item.fit === "fitted" ? 0.965 : 1;
 
@@ -95,11 +96,14 @@ function Garment({ item, category }) {
         <img
           src={source}
           alt={`${item.color_primary || ""} ${CATEGORY_LABELS[category] || category}`.trim()}
-          className="h-full w-full object-contain"
+          className={cn("h-full w-full object-contain transition-opacity duration-300 motion-reduce:transition-none", loaded ? "opacity-100" : "opacity-0")}
           style={{
             transform: `scale(${fitScale})`,
             filter: "drop-shadow(0 5px 6px rgba(36, 40, 37, 0.13)) drop-shadow(0 1px 1px rgba(36, 40, 37, 0.10))",
           }}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
           draggable={false}
         />
       </div>
@@ -122,10 +126,6 @@ export default function MannequinOutfit({ items, className }) {
       <div className="absolute inset-x-0 bottom-0 h-[20%] bg-[linear-gradient(180deg,transparent,rgba(194,198,192,.22))]" />
       <StudioForm prefix={prefix} covered={covered} />
       {LAYERS.map((category) => byCategory[category] && <Garment key={byCategory[category].id} item={byCategory[category]} category={category} />)}
-      <div className="pointer-events-none absolute inset-x-4 top-4 flex items-center justify-between text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-600/70">
-        <span>Styled form</span><span>Preview</span>
-      </div>
-      <p className="absolute inset-x-4 bottom-3 text-center text-[10px] font-medium text-slate-600/75">Placement preview · uses your original garment photos</p>
     </section>
   );
 }

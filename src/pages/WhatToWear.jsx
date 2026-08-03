@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { db } from "@/api/firebaseClient";
 import { collection, doc, setDoc, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";
@@ -8,6 +8,7 @@ import { Sparkles, Loader2, Wand2, Check } from "lucide-react";
 import OccasionSelector from "@/components/wardrobe/OccasionSelector";
 import OutfitCard from "@/components/wardrobe/OutfitCard";
 import EmptyState from "@/components/wardrobe/EmptyState";
+import { OutfitListSkeleton } from "@/components/wardrobe/Skeletons";
 import { generateOutfits } from "@/lib/outfitScoring";
 
 function LoadingChecklist() {
@@ -79,6 +80,8 @@ export default function WhatToWear() {
   const [totalCount, setTotalCount] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [loggingId, setLoggingId] = useState(null);
+  const generationId = useRef(0);
+  const reduceMotion = useReducedMotion();
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -104,6 +107,7 @@ export default function WhatToWear() {
   const effectiveOccasion = freeText.trim() || occasion;
 
   const handleGenerate = async () => {
+    const currentGeneration = ++generationId.current;
     setGenerating(true);
     try {
       const combos = generateOutfits(items, effectiveOccasion, history);
@@ -133,7 +137,7 @@ export default function WhatToWear() {
             });
             if (res.ok) {
               const data = await res.json();
-              if (data.explanation) {
+              if (data.explanation && generationId.current === currentGeneration) {
                 setOutfits((prev) =>
                   (prev || []).map((o, i) =>
                     i === idx ? { ...o, explanation: data.explanation } : o
@@ -176,7 +180,7 @@ export default function WhatToWear() {
     items.some((i) => i.category === "bottom");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 sm:space-y-8">
       <div>
         <h1 className="font-heading text-3xl font-bold tracking-tight">
           What should I wear?
@@ -220,7 +224,12 @@ export default function WhatToWear() {
             </p>
           )}
 
-          {generating && <LoadingChecklist />}
+          {generating && (
+            <>
+              <LoadingChecklist />
+              <OutfitListSkeleton count={3} />
+            </>
+          )}
 
           {!generating && outfits && outfits.length === 0 && (
             <EmptyState
@@ -232,7 +241,7 @@ export default function WhatToWear() {
 
           {!generating && outfits && outfits.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between border-b pb-3 text-sm text-muted-foreground">
+              <div className="flex flex-col gap-2 border-b pb-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
                   <span>Found <strong className="text-foreground font-semibold">{totalCount || outfits.length * 2}</strong> possible combinations</span>
@@ -243,12 +252,12 @@ export default function WhatToWear() {
               </div>
 
               <motion.div 
-                className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-stretch"
+                className="grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3"
                 variants={{
                   hidden: { opacity: 0 },
                   show: {
                     opacity: 1,
-                    transition: { staggerChildren: 0.04 }
+                    transition: { staggerChildren: reduceMotion ? 0 : 0.04 }
                   }
                 }}
                 initial="hidden"
@@ -261,8 +270,8 @@ export default function WhatToWear() {
                     <motion.div
                       key={key}
                       variants={{
-                        hidden: { opacity: 0, y: 16 },
-                        show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
+                        hidden: { opacity: 0, y: reduceMotion ? 0 : 16 },
+                        show: { opacity: 1, y: 0, transition: { duration: reduceMotion ? 0 : 0.3, ease: "easeOut" } }
                       }}
                     >
                       <OutfitCard

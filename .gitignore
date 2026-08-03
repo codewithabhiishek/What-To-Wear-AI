@@ -31,4 +31,3 @@ dist-ssr
 .vite
 .vercel
 .env*
-!.env.example

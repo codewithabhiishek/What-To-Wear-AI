@@ -70,6 +70,8 @@ export default function PremiumMoodboard({ items, className }) {
                 filter:
                   "drop-shadow(0px 4px 18px rgba(0,0,0,0.13)) drop-shadow(0px 1px 4px rgba(0,0,0,0.07))",
               }}
+              loading="lazy"
+              decoding="async"
               draggable={false}
             />
           </div>

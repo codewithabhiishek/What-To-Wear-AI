@@ -29,17 +29,17 @@ export default function OutfitDetailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="w-full max-w-[800px] h-auto max-h-[90vh] overflow-y-auto rounded-[2rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-6 gap-0 transition-all duration-200 ease-out [&>button:last-child]:hidden"
+        className="max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-[880px] overflow-y-auto rounded-[1.5rem] border border-border/50 bg-background/95 p-4 shadow-2xl backdrop-blur-2xl sm:w-full sm:p-6 [&>button:last-child]:hidden"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Outfit Details</DialogTitle>
         </DialogHeader>
 
         {/* 1. TOP HEADER BAR: Perfectly Vertically Centered Baseline */}
-        <div className="flex h-12 items-center justify-between border-b border-border/40 pb-4 mb-6 gap-3">
+        <div className="mb-5 flex items-center justify-between gap-3 border-b border-border/40 pb-4 sm:mb-6">
           
           {/* LEFT: Match % & Best Match Badges */}
-          <div className="flex items-center gap-2 min-w-0 flex-1 justify-start">
+          <div className="flex min-w-0 items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-bold text-primary shrink-0">
               <Sparkles className="h-3.5 w-3.5" />
               {score}% Match
@@ -51,13 +51,12 @@ export default function OutfitDetailDialog({
             )}
           </div>
 
-          {/* CENTER: Outfit Details Title */}
-          <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight text-foreground text-center shrink-0 px-2">
+          <h2 className="hidden font-heading text-xl font-bold tracking-tight text-foreground sm:block">
             Outfit Details
           </h2>
 
           {/* RIGHT: Favorite Button & 36x36 Circular Close Button */}
-          <div className="flex items-center gap-2.5 flex-1 justify-end shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={() =>
@@ -67,7 +66,7 @@ export default function OutfitDetailDialog({
                   outfit.occasion || "casual"
                 )
               }
-              className="h-9 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3.5 text-xs font-semibold text-foreground shadow-2xs transition-all duration-150 hover:bg-muted hover:scale-105 active:scale-95"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 text-xs font-semibold text-foreground shadow-2xs transition-transform duration-150 hover:bg-muted hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Heart
                 className={cn(
@@ -75,7 +74,7 @@ export default function OutfitDetailDialog({
                   isFav ? "fill-red-500 text-red-500" : "text-muted-foreground"
                 )}
               />
-              <span>{isFav ? "Saved" : "Favorite"}</span>
+              <span className="hidden sm:inline">{isFav ? "Saved" : "Favorite"}</span>
             </button>
 
             {/* 36x36 Circular Close Button */}
@@ -87,15 +86,16 @@ export default function OutfitDetailDialog({
         </div>
 
         {/* 2. BODY GRID: 300px Left Column / Rest Right Column */}
-        <div className="grid grid-cols-1 sm:grid-cols-[300px_1fr] gap-8 items-start w-full">
+        <h2 className="mb-4 font-heading text-lg font-bold tracking-tight sm:hidden">Outfit Details</h2>
+        <div className="grid w-full grid-cols-1 items-start gap-6 md:grid-cols-[minmax(250px,320px)_1fr] md:gap-8">
           
           {/* LEFT COLUMN: Outfit Media Preview stage */}
           <div className="w-full shrink-0">
-            <OutfitMedia items={items} isFeatured={false} />
+            <OutfitMedia items={items} isFeatured={false} aspectClass="w-full max-w-[320px] aspect-[9/14] mx-auto" />
           </div>
 
           {/* RIGHT COLUMN: Style Vibe rationale, Pieces & Footer Buttons (Strict intrinsic layout flow) */}
-          <div className="flex flex-col gap-6 w-full h-full justify-start">
+          <div className="flex h-full w-full flex-col gap-5 justify-start md:gap-6">
             
             {/* Style Vibe Description */}
             <div className="space-y-1.5">
@@ -126,6 +126,8 @@ export default function OutfitDetailDialog({
                         src={item.image_url}
                         alt={item.color_primary}
                         className="h-full w-full object-contain"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -142,17 +144,17 @@ export default function OutfitDetailDialog({
             </div>
 
             {/* 3. FOOTER ACTIONS: Placed immediately under the pieces list */}
-            <div className="pt-5 border-t border-border/40 flex items-center justify-end gap-3 w-full">
+            <div className="flex w-full flex-col-reverse gap-2 border-t border-border/40 pt-4 sm:flex-row sm:justify-end sm:gap-3 sm:pt-5">
               <DialogClose asChild>
                 <Button
                   variant="outline"
-                  className="h-10 rounded-xl px-5 text-xs font-medium border-border/60 transition-all hover:bg-muted active:scale-98"
+                  className="h-10 rounded-xl border-border/60 px-5 text-xs font-medium transition-all hover:bg-muted active:scale-98"
                 >
                   Close
                 </Button>
               </DialogClose>
               <Button
-                className="h-10 rounded-xl px-5 text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-98 flex items-center gap-1.5"
+                className="flex h-10 items-center gap-1.5 rounded-xl px-5 text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-98"
                 onClick={() => {
                   onWoreThis();
                   onOpenChange(false);
