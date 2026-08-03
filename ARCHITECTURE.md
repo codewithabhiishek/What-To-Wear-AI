@@ -17,7 +17,7 @@ This document is the single source of truth for the technical design, data flow,
 | Serverless API | Vercel Serverless Functions (`/api/*`) |
 | AI — Vision tagging | NVIDIA NIM · `meta/llama-3.2-90b-vision-instruct` |
 | AI — Text explanations | NVIDIA / DeepSeek · `deepseek-ai/deepseek-v4-flash` |
-| Outfit visualization | Client-side anchored styled-form renderer using the user's actual cut-out photos |
+| Outfit visualization | Client-side styled form plus optional Qwen Image Edit AI Styled Preview |
 | Image Pre-Processing | `heic2any` (iPhone HEIC/HEIF conversion), Canvas EXIF orientation & 1400px downscaling |
 | Background removal | `@imgly/background-removal` (runs fully in the browser, WASM) |
 
@@ -31,6 +31,7 @@ what-to-wear-ai/
 │   ├── upload-photo.js           # Streams upload → Vercel Blob, returns public URL
 │   ├── tag-clothing-item.js      # Llama 3.2 90B Vision → structured JSON tags (with retries & 25s timeout)
 │   ├── generate-outfit-explanation.js  # DeepSeek V4 Flash → short natural outfit rationale (with retries & 10s timeout)
+│   ├── create-ai-styled-preview.js # Qwen Image Edit proxy; keeps its key server-side
 │
 ├── src/
 │   ├── api/
@@ -43,6 +44,7 @@ what-to-wear-ai/
 │   │   ├── uploadPipeline.js     # Decoupled background upload engine with live progress callbacks
 │   │   ├── imageUtils.js         # HEIC conversion, EXIF orientation, downscaling & timing logs
 │   │   ├── garmentImage.js       # Non-destructive alpha-bound trimming for styled-form previews
+│   │   ├── aiStyledPreview.js     # Reference-board builder + Cache Storage cache for the beta preview
 │   │   ├── wardrobeConstants.js  # Occasions with icons, category/pattern/fit/season/formality enums
 │   │   ├── authReturnTo.js       # Safe same-origin ?returnTo= resolution
 │   │   ├── query-client.js       # Shared TanStack QueryClient instance
@@ -100,6 +102,8 @@ VITE_FIREBASE_APP_ID=
 # AI Keys (server-side only)
 NVIDIA_API_KEY=          # Llama 3.2 90B Vision tagging
 DEEPSEEK_API_KEY=        # DeepSeek V4 Flash outfit explanations
+QWEN_IMAGE_EDIT_BASE_URL= # Deployed NIM URL including /v1 (server-only)
+QWEN_IMAGE_EDIT_API_KEY=  # Deployed NIM/API gateway credential (server-only)
 
 # Vercel Blob — auto-provided when you link a Blob store in the Vercel dashboard
 BLOB_READ_WRITE_TOKEN=

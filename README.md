@@ -38,6 +38,8 @@ You will need to fill in your `.env` file with credentials from Firebase and NVI
 | `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID | Firebase Console -> Project Settings |
 | `VITE_FIREBASE_APP_ID` | Firebase App ID | Firebase Console -> Project Settings |
 | `NVIDIA_API_KEY` | NVIDIA NIM API Key | [NVIDIA Build](https://build.nvidia.com/) |
+| `QWEN_IMAGE_EDIT_BASE_URL` | Public URL of your deployed Qwen Image Edit NIM, including `/v1` | Your NIM deployment |
+| `QWEN_IMAGE_EDIT_API_KEY` | Secret used by the deployed NIM/API gateway | Your NVIDIA NIM deployment |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob Token | Vercel Dashboard -> Storage -> Blob |
 
 ### 3. Run Locally
@@ -51,7 +53,7 @@ npx vercel dev
 Deploying to Vercel is seamless:
 1. Push your code to your GitHub repository.
 2. Go to [Vercel](https://vercel.com/) and import your GitHub repository.
-3. Add all the environment variables from your `.env` file into the Vercel project settings.
+3. Add all the environment variables from your `.env` file into the Vercel project settings. For AI Styled Preview, add `QWEN_IMAGE_EDIT_BASE_URL` and `QWEN_IMAGE_EDIT_API_KEY` as server-only variables; never prefix them with `VITE_`.
 4. Deploy! Vercel will automatically build the React frontend and serve the `api/` directory as serverless functions.
 
 ## Project Structure
