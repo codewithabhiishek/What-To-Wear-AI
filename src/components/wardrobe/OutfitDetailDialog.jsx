@@ -105,9 +105,6 @@ export default function OutfitDetailDialog({
               <p className="text-sm sm:text-[15px] text-foreground/90 font-medium leading-relaxed">
                 {explanation || outfit.explanation || "Relaxed denim and cotton combo for easy wear."}
               </p>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                Styled form is a placement preview using your garment photos, not a virtual try-on.
-              </p>
             </div>
 
             {/* Clothing Pieces List */}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutGrid, Shirt, Sparkles } from "lucide-react";
+import { LayoutGrid, Shirt } from "lucide-react";
 import MannequinOutfit from "./MannequinOutfit";
 import PremiumMoodboard from "./PremiumMoodboard";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
  */
 export default function OutfitMedia({ 
   items, 
-  isFeatured, 
   showSwitcher = true,
   aspectClass = "w-full max-w-[320px] aspect-[9/14]"
 }) {
@@ -57,11 +56,7 @@ export default function OutfitMedia({
         "relative flex items-center justify-center overflow-hidden rounded-[1.25rem] border border-border/40 bg-muted/10 shadow-[0_16px_36px_-28px_rgba(0,0,0,.6)]",
         aspectClass
       )}>
-        {isFeatured && (
-          <span className="absolute top-2.5 left-2.5 z-20 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm backdrop-blur-sm pointer-events-none">
-            <Sparkles className="h-3 w-3" /> Best Match
-          </span>
-        )}
+        {/* No overlays allowed inside the preview stage */}
         {mode === "styled-form" ? (
           <MannequinOutfit items={items} className="border-0 rounded-none w-full h-full" />
         ) : (
