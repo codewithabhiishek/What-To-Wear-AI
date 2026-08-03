@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Upload, Check, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, Upload, Check, AlertCircle } from "lucide-react";
 import { db } from "@/api/firebaseClient";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";

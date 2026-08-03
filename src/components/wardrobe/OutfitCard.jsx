@@ -52,7 +52,7 @@ export default function OutfitCard({
             items={items} 
             isFeatured={isFeatured} 
             showSwitcher={false}
-            aspectClass="w-[168px] h-[210px] mx-auto"
+            aspectClass="w-[150px] aspect-[9/14] mx-auto"
           />
         </div>
 

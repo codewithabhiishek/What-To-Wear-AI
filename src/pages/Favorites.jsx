@@ -6,7 +6,7 @@ import { collection, doc, setDoc, query, orderBy, limit, getDocs } from "firebas
 import { useAuth } from "@/lib/AuthContext";
 import { useFavorites } from "@/lib/FavoritesContext";
 import { Button } from "@/components/ui/button";
-import { Heart, Sparkles, Loader2, Wand2 } from "lucide-react";
+import { Heart, Wand2 } from "lucide-react";
 import OutfitCard from "@/components/wardrobe/OutfitCard";
 import EmptyState from "@/components/wardrobe/EmptyState";
 import { OutfitListSkeleton } from "@/components/wardrobe/Skeletons";

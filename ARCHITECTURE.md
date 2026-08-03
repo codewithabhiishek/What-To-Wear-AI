@@ -17,7 +17,7 @@ This document is the single source of truth for the technical design, data flow,
 | Serverless API | Vercel Serverless Functions (`/api/*`) |
 | AI — Vision tagging | NVIDIA NIM · `meta/llama-3.2-90b-vision-instruct` |
 | AI — Text explanations | NVIDIA / DeepSeek · `deepseek-ai/deepseek-v4-flash` |
-| AI — Outfit visualization | NVIDIA / Qwen · `Qwen Image` model |
+| Outfit visualization | Client-side anchored styled-form renderer using the user's actual cut-out photos |
 | Image Pre-Processing | `heic2any` (iPhone HEIC/HEIF conversion), Canvas EXIF orientation & 1400px downscaling |
 | Background removal | `@imgly/background-removal` (runs fully in the browser, WASM) |
 
@@ -31,7 +31,6 @@ what-to-wear-ai/
 │   ├── upload-photo.js           # Streams upload → Vercel Blob, returns public URL
 │   ├── tag-clothing-item.js      # Llama 3.2 90B Vision → structured JSON tags (with retries & 25s timeout)
 │   ├── generate-outfit-explanation.js  # DeepSeek V4 Flash → short natural outfit rationale (with retries & 10s timeout)
-│   └── visualize-outfit.js       # Qwen Image model → high-resolution e-commerce outfit photograph
 │
 ├── src/
 │   ├── api/
@@ -43,7 +42,6 @@ what-to-wear-ai/
 │   │   ├── outfitScoring.js      # Client-side outfit combination & additive/subtractive scoring engine
 │   │   ├── uploadPipeline.js     # Decoupled background upload engine with live progress callbacks
 │   │   ├── imageUtils.js         # HEIC conversion, EXIF orientation, downscaling & timing logs
-│   │   ├── visualizeOutfit.js    # Outfit image prompt builder + localStorage cache
 │   │   ├── wardrobeConstants.js  # Occasions with icons, category/pattern/fit/season/formality enums
 │   │   ├── authReturnTo.js       # Safe same-origin ?returnTo= resolution
 │   │   ├── query-client.js       # Shared TanStack QueryClient instance
@@ -76,9 +74,9 @@ what-to-wear-ai/
 │   │       ├── OccasionSelector.jsx  # Chip picker with emoji icons + free-text for occasion
 │   │       ├── OutfitCard.jsx        # Standardized outfit card with Heart favorite toggle & match badge
 │   │       ├── OutfitDetailDialog.jsx# Compact 2-column modal (100% viewport fit, zero scrolling)
-│   │       ├── OutfitMedia.jsx       # Tab switcher: flat-lay moodboard vs. on-mannequin
+│   │       ├── OutfitMedia.jsx       # Tab switcher: flat-lay moodboard vs. anchored styled form
 │   │       ├── PremiumMoodboard.jsx  # Editorial 4/5 flat-lay grid using real item photos with hover scaling
-│   │       ├── MannequinOutfit.jsx   # Minimalist fashion SVG mannequin silhouette (4/5 ratio)
+│   │       ├── MannequinOutfit.jsx   # Anchored SVG styled-form composition (9/14 ratio)
 │   │       ├── OutfitThumbnails.jsx  # Small row of item thumbnails (History page)
 │   │       ├── EmptyState.jsx        # Dashed-border empty state with icon + CTA
 │   │       └── Skeletons.jsx         # Shimmer loading skeletons for closet & outfit lists
@@ -101,7 +99,6 @@ VITE_FIREBASE_APP_ID=
 # AI Keys (server-side only)
 NVIDIA_API_KEY=          # Llama 3.2 90B Vision tagging
 DEEPSEEK_API_KEY=        # DeepSeek V4 Flash outfit explanations
-QWEN_IMAGE_API_KEY=      # Qwen Image model outfit visualizations
 
 # Vercel Blob — auto-provided when you link a Blob store in the Vercel dashboard
 BLOB_READ_WRITE_TOKEN=
@@ -209,9 +206,10 @@ Runs entirely on the client — no server round-trip — so suggestions appear i
 - **0ms Outfit Cards:** Clicking *"Generate outfits"* scores combos locally in ~2ms and displays outfit cards immediately.
 - **Background AI Explanations:** DeepSeek V4 Flash (`deepseek-ai/deepseek-v4-flash`) fetches short natural rationale in the background and streams explanations live into card states.
 
-### 7.4 High-Fashion Mannequin Renderer (`MannequinOutfit.jsx`)
-- **Minimalist Silhouette:** Headless, slim proportions, rounded shoulders, and tapered legs inspired by luxury fashion retailers (Zara, Uniqlo, COS).
-- **Smart Body Masking:** Automatically fades torso and leg vector paths when covered by clothing, preventing dark/grey silhouette lines from showing through garments.
+### 7.4 Anchored Styled-Form Renderer (`MannequinOutfit.jsx`)
+- **Truthful by design:** Uses only the user's uploaded garment cut-outs; it is clearly labeled as a placement preview rather than a virtual try-on.
+- **Anatomical anchors:** Category-specific shoulder, waist, inseam, shoe, and accessory frames preserve a stable 9:14 fashion-form composition.
+- **Depth cues:** Layer-aware occlusion, clipped silhouettes, studio gradients, and contact shadows make the outfit readable without inventing fabric geometry.
 
 ### 7.5 Closet Search & Filtering (`Closet.jsx`)
 - **Real-Time Search:** Search wardrobe by color, category, pattern, or material.

@@ -8,7 +8,7 @@ What To Wear AI solves the daily struggle of deciding what to wear by acting as 
 - **AI-Powered Clothing Tagging**: Automatically extracts category, color, pattern, fit, formality, material, and season from your uploaded clothing photos.
 - **Occasion-Based Outfit Generation**: A scoring engine builds and ranks outfits based on formality match, silhouette balance, color harmony, variety, and pattern coordination.
 - **AI Outfit Explanations**: Generates a natural-language explanation for why each outfit works well together.
-- **Outfit Visualization**: Generates an on-model visualization of your outfit combination.
+- **Outfit Visualization**: Creates an anchored styled-form preview from your uploaded garment photos, alongside an editorial flat lay.
 - **Outfit History Tracking**: Tracks outfits you've worn to deprioritize them in future suggestions for better rotation.
 
 ## Tech Stack

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
 import { db } from "@/api/firebaseClient";
 import { collection, query, orderBy, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "@/lib/AuthContext";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutGrid, UserRound, Sparkles } from "lucide-react";
+import { LayoutGrid, Shirt, Sparkles } from "lucide-react";
 import PremiumMoodboard from "./PremiumMoodboard";
 import MannequinOutfit from "./MannequinOutfit";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 /**
  * Outfit preview with segmented control view switcher:
  * - Flat lay (default): editorial grid of real item photos
- * - On mannequin: slim fashion mannequin silhouette composition
+ * - Styled form: anchored composition of the user's actual garment photos
  */
 export default function OutfitMedia({ 
   items, 
@@ -25,6 +25,7 @@ export default function OutfitMedia({
           <button
             type="button"
             onClick={() => setMode("flat")}
+            aria-pressed={mode === "flat"}
             className={cn(
               "flex-1 inline-flex items-center justify-center gap-1.5 rounded-full text-xs transition-all duration-200 h-full",
               mode === "flat"
@@ -38,6 +39,7 @@ export default function OutfitMedia({
           <button
             type="button"
             onClick={() => setMode("mannequin")}
+            aria-pressed={mode === "mannequin"}
             className={cn(
               "flex-1 inline-flex items-center justify-center gap-1.5 rounded-full text-xs transition-all duration-200 h-full",
               mode === "mannequin"
@@ -45,8 +47,8 @@ export default function OutfitMedia({
                 : "text-muted-foreground hover:text-foreground font-medium"
             )}
           >
-            <UserRound className="h-3.5 w-3.5" />
-            Mannequin
+            <Shirt className="h-3.5 w-3.5" />
+            Styled form
           </button>
         </div>
       )}
