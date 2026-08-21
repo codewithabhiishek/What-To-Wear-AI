@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { ModeToggle } from "@/components/ModeToggle";
 
 const navItems = [
-  { to: "/", label: "Closet", icon: Shirt, end: true },
+  { to: "/closet", label: "Closet", icon: Shirt, end: false },
   { to: "/what-to-wear", label: "What to Wear", icon: Sparkles, end: false },
   { to: "/favorites", label: "Favorites", icon: Heart, end: false },
   { to: "/history", label: "History", icon: Clock, end: false },
@@ -17,7 +17,7 @@ export default function Layout() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
-          <NavLink to="/" className="flex items-center gap-3 group">
+          <NavLink to="/closet" className="flex items-center gap-3 group">
             <motion.span
               whileHover={{ scale: 1.1, rotate: [0, -10, 10, -5, 0] }}
               transition={{ duration: 0.5 }}

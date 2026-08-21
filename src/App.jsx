@@ -21,22 +21,27 @@ import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
+import Landing from "@/pages/Landing";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth } = useAuth();
+  const { isLoadingAuth, isAuthenticated } = useAuth();
 
   if (isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-muted border-t-foreground rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
     <Routes>
+      <Route
+        path="/"
+        element={isAuthenticated ? <Navigate to="/closet" replace /> : <Landing />}
+      />
+      <Route path="/landing" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -49,7 +54,7 @@ const AuthenticatedApp = () => {
         }
       >
         <Route element={<Layout />}>
-          <Route path="/" element={<Closet />} />
+          <Route path="/closet" element={<Closet />} />
           <Route path="/what-to-wear" element={<WhatToWear />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/history" element={<History />} />

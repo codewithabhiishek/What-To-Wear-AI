@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -32,7 +32,7 @@
     --chart-5: 27 87% 67%;
     --radius: 0.75rem;
     --font-heading: 'Sora', ui-sans-serif, system-ui, sans-serif;
-    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Plus Jakarta Sans', 'Sora', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --sidebar-background: 0 0% 98%;
