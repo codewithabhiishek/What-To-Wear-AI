@@ -145,15 +145,18 @@ export default function Landing() {
             {/* CTA Buttons */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link to={isAuthenticated ? "/closet" : "/register"}>
-                <Button size="lg" className="rounded-full px-7 text-base font-semibold h-13 shadow-md">
+                <Button className="h-12 rounded-full px-6 text-sm font-semibold shadow-md inline-flex items-center justify-center gap-2">
                   {isAuthenticated ? "Go to My Closet" : "Start Styling — It's Free"}
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
 
               {!isAuthenticated && (
                 <Link to="/login">
-                  <Button size="lg" variant="outline" className="rounded-full px-6 text-base font-medium h-13">
+                  <Button
+                    variant="outline"
+                    className="h-12 rounded-full px-6 text-sm font-semibold border-border bg-background inline-flex items-center justify-center"
+                  >
                     Sign In
                   </Button>
                 </Link>
@@ -313,9 +316,9 @@ export default function Landing() {
           </p>
           <div className="pt-2">
             <Link to={isAuthenticated ? "/closet" : "/register"}>
-              <Button size="lg" variant="secondary" className="rounded-full px-8 text-base font-semibold h-13 shadow-lg">
+              <Button variant="secondary" className="h-12 rounded-full px-8 text-sm md:text-base font-semibold shadow-lg inline-flex items-center justify-center gap-2">
                 {isAuthenticated ? "Open My Closet" : "Get Started Free — Zero Cost"}
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
