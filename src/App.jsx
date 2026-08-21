@@ -21,6 +21,7 @@ import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Landing from "@/pages/Landing";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
 
